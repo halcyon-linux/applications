@@ -5,13 +5,13 @@
 # There is no first-party version feed (the download URL embeds a
 # non-derivable build id); the sweep reads pkgver off the AUR PKGBUILD.
 Name:           antigravity-cli
-Version:        1.2.12
+Version:        1.2.13
 Release:        1%{?dist}
 Summary:        Google's agentic development platform (CLI companion)
 License:        LicenseRef-Proprietary
 URL:            https://antigravity.google/product/antigravity-cli
 # Google's per-release build id in the download URL
-%global cli_build 5784551402897408
+%global cli_build 6662628811079680
 #!RemoteAsset
 Source0:        https://storage.googleapis.com/antigravity-public/antigravity-cli/%{version}-%{cli_build}/linux-x64/cli_linux_x64.tar.gz
 Source1:        LICENSE
