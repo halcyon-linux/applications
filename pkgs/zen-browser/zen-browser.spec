@@ -58,6 +58,6 @@ done
 %license LICENSE
 
 %changelog
-* Mon Sep 29 2026 halcyon-autoupdate <aahsnr041@proton.me> - 1.22.3b-1
+* Tue Sep 29 2026 halcyon-autoupdate <aahsnr041@proton.me> - 1.22.3b-1
 - initial package (vendor rewrap of the official Linux tarball,
   shape per zed.spec/obsidian.spec)

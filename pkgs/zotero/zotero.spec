@@ -125,7 +125,7 @@ appstreamcli validate --no-net %{buildroot}%{_metainfodir}/%{appid}.metainfo.xml
 %{_metainfodir}/%{appid}.metainfo.xml
 
 %changelog
-* Mon Sep 29 2026 halcyon-autoupdate <aahsnr041@proton.me> - 10.0.3-4
+* Tue Sep 29 2026 halcyon-autoupdate <aahsnr041@proton.me> - 10.0.3-4
 - ship distribution/policies.json (DisableAppUpdate) — RPM-managed installs
   must not self-update; the base-image verify gates grep for it
 

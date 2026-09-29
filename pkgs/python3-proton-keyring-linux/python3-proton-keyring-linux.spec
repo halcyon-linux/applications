@@ -54,5 +54,5 @@ find %{buildroot} -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null || :
 %{python3_sitelib}/proton_keyring_linux-*/
 
 %changelog
-* Tue Sep 30 2026 halcyon-autoupdate <aahsnr041@proton.me> - 0.2.3-1
+* Wed Sep 30 2026 halcyon-autoupdate <aahsnr041@proton.me> - 0.2.3-1
 - initial package: vendor rewrap of the official repo.protonvpn.com RPM

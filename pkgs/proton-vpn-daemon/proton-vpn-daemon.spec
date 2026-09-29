@@ -75,5 +75,5 @@ find %{buildroot} -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null || :
 %{_unitdir}/me.proton.vpn.split_tunneling.service
 
 %changelog
-* Tue Sep 30 2026 halcyon-autoupdate <aahsnr041@proton.me> - 0.13.8-1
+* Wed Sep 30 2026 halcyon-autoupdate <aahsnr041@proton.me> - 0.13.8-1
 - initial package: vendor rewrap of the official repo.protonvpn.com RPM

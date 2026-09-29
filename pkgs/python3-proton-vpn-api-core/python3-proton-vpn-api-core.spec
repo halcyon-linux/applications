@@ -19,7 +19,7 @@
 ExclusiveArch:      x86_64
 Name:               python3-proton-vpn-api-core
 Version:            5.8.3
-Release:            1%{?dist}
+Release:            2%{?dist}
 Summary:            Proton VPN API facade with the integrated NetworkManager backend and Rust services
 License:            GPL-3.0-or-later
 URL:                https://github.com/ProtonVPN/python-proton-vpn-api-core
@@ -59,10 +59,11 @@ test -d usr/lib64/python3.14/site-packages/proton/vpn
 mkdir -p %{buildroot}%{python3_sitearch} %{buildroot}%{_prefix} %{buildroot}%{_libexecdir}
 cp -a extract/usr/lib64/python3.14/site-packages/proton %{buildroot}%{python3_sitearch}/
 cp -a extract/usr/lib64/python3.14/site-packages/proton_vpn_api_core-*.dist-info %{buildroot}%{python3_sitearch}/
-cp -a extract/usr/lib64/. %{buildroot}%{_prefix}/
-cp -a extract/usr/lib/. %{buildroot}%{_prefix}/
-cp -a extract/usr/share/. %{buildroot}%{_prefix}/
-cp -a extract/usr/libexec/. %{buildroot}%{_prefix}/
+# copy the subtrees WHOLE: a trailing /. would flatten their contents one
+# level (the libexec services would land in /usr, dbus-1 in /usr/dbus-1, …)
+cp -a extract/usr/lib %{buildroot}%{_prefix}/
+cp -a extract/usr/share %{buildroot}%{_prefix}/
+cp -a extract/usr/libexec %{buildroot}%{_prefix}/
 find %{buildroot} -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null || :
 
 %post
@@ -86,5 +87,8 @@ find %{buildroot} -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null || :
 %{_datadir}/dbus-1/system.d/nm-protun-service.conf
 
 %changelog
-* Tue Sep 30 2026 halcyon-autoupdate <aahsnr041@proton.me> - 5.8.3-1
+* Wed Sep 30 2026 halcyon-autoupdate <aahsnr041@proton.me> - 5.8.3-2
+- install fix: copy the usr subtrees whole (the trailing /. flattened
+  libexec, share and lib into /usr) and drop the stray unrelocated lib64 copy
+* Wed Sep 30 2026 halcyon-autoupdate <aahsnr041@proton.me> - 5.8.3-1
 - initial package: vendor rewrap of the official repo.protonvpn.com RPM

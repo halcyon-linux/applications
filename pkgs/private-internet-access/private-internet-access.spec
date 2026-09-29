@@ -25,7 +25,7 @@
 
 Name:               private-internet-access
 Version:            3.7.2
-Release:            1%{?dist}
+Release:            2%{?dist}
 Summary:            Private Internet Access VPN client (official installer rewrap)
 License:            LicenseRef-PIA
 URL:                https://www.privateinternetaccess.com
@@ -83,6 +83,8 @@ install -Dm644 extract/installfiles/piavpn.desktop \
     %{buildroot}%{_datadir}/applications/piavpn.desktop
 install -Dm644 extract/installfiles/app-icon.png \
     %{buildroot}%{_datadir}/pixmaps/piavpn.png
+# BUILDROOT has no usr/bin yet — create it or the symlink fails
+install -dm755 %{buildroot}%{_bindir}
 ln -sr %{buildroot}/opt/piavpn/bin/piactl %{buildroot}%{_bindir}/piactl
 
 # NetworkManager unmanaged-devices rule for the wgpia* interfaces
@@ -115,6 +117,8 @@ setcap cap_net_bind_service=ep /opt/piavpn/bin/pia-unbound || :
 /opt/piavpn/
 
 %changelog
+* Wed Sep 30 2026 halcyon-autoupdate <aahsnr041@proton.me> - 3.7.2-2
+- install fix: create bindir before linking piactl into it
 * Tue Sep 29 2026 halcyon-autoupdate <aahsnr041@proton.me> - 3.7.2-1
 - initial package: vendor rewrap of the official pia-linux-3.7.2-08420.run
   installer (AUR piavpn-bin layout)
