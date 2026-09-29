@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Curated AppStream metadata for the bitwarden COPR rewrap.
+     Upstream ships no AppStream file at all. The id com.bitwarden.desktop
+     is the RDNS id Bitwarden itself uses, matching Icon/StartupWMClass in
+     bitwarden.desktop. CI patches the <release> version/date on each new
+     upstream release. -->
+<component type="desktop-application">
+  <id>com.bitwarden.desktop</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+  <name>Bitwarden</name>
+  <summary>A secure and free password manager for all of your devices</summary>
+  <description>
+    <p>Bitwarden is a secure password manager that stores, shares and syncs your logins, cards and identities across all your devices with end-to-end encryption.</p>
+    <p>Generate strong unique passwords, auto-fill logins, and share credentials securely with family, teams or enterprises.</p>
+  </description>
+  <categories>
+    <category>Utility</category>
+  </categories>
+  <developer id="com.bitwarden">
+    <name>Bitwarden Inc.</name>
+  </developer>
+  <url type="homepage">https://bitwarden.com</url>
+  <url type="vcs-browser">https://github.com/bitwarden/clients</url>
+  <url type="help">https://bitwarden.com/help/</url>
+  <launchable type="desktop-id">bitwarden.desktop</launchable>
+  <provides>
+    <binary>bitwarden</binary>
+  </provides>
+  <releases>
+    <release version="2026.8.0" date="2026-08-20"/>
+  </releases>
+  <content_rating type="oars-1.1"/>
+</component>

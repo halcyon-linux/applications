@@ -1,0 +1,235 @@
+# ci/packages.toml — the applications build registry + sweep-feed config.
+#
+# Consumed by ci/matrix.py (build selection) and ci/sweep/sweep.py (version
+# sweep). One table per package; **a package without an entry is not built**.
+# The specs themselves live in pkgs/<pkg>/<pkg>.spec.
+#
+# Batches are dependency levels, not parallel groups within one job:
+# copr-build.yml submits the waves sequentially and waits for each wave's
+# Copr builds before the next — each successful build is immediately visible
+# to the project repo, so a package may rely on anything built in a lower
+# batch. Packages inside one batch must therefore never depend on each other.
+#
+# Build-time dependencies that Fedora 44 does not provide: glaze, hyprwire
+# and hyprtoolkit are packaged in THIS repo (ports of the lionheartp/Hyprland
+# Copr specs; the fourth input, wlroots, ships in Fedora 44 itself). The
+# lionheartp Copr stays configured on the Copr chroot only as a lowest-
+# priority bootstrap for fresh projects; once our own builds exist, the
+# project repo wins. Terra 44 is also configured there (anda-srpm-macros for
+# the rust specs). See notes/copr-setup.md.
+#
+# The optional [pkg.updates] table drives the daily sweep (update.yml):
+#   feed = "github-release"  + repo = "owner/name"   latest GitHub release tag
+#   feed = "github-tag"      + repo = "owner/name"   newest git tag
+#   feed = "custom"          + custom = "<name>"     ci/sweep/custom.py function
+# Packages without it (texlive rolling groups) are never swept.
+#
+# The optional `project = "<copr-project>"` field routes a package's
+# builds to that Copr project (default "halcyon", the desktop core).
+# matrix.py emits it as a build-matrix label; unknown projects fail
+# validation. Every project must own a disjoint set of packages.
+#
+# batch 0  roots: Fedora-only build deps and leaf tools/apps/wrappers
+# batch 1  first level: hyprlang, aquamarine, hyprgraphics, hyprwire, noctalia-greeter-git
+# batch 2  second level: hyprcursor, hyprland-qt-support, xdg-desktop-portal-hyprland, hyprtoolkit
+# batch 3  third level: hyprland-git, hyprland-guiutils, hyprpwcenter, hyprshutdown, kernel-p03, noctalia-git, onlyoffice-desktopeditors
+# batch 4  intentionally empty
+# batch 5  texlive rolling groups (40 generated packages)
+
+# --------------------------------------------------------------- desktops
+
+# --- batch 0 ------------------------------------------------------------
+[kitty]
+batch = 0
+
+[kitty.updates]
+feed = "github-release"
+repo = "kovidgoyal/kitty"
+
+# zed: vendor rewrap of upstream's self-contained zed-linux tarball (same
+# archive zed.dev/install.sh deploys), obsidian-style full brp nil set;
+# x86_64 only.
+[zed]
+batch = 0
+
+[zed.updates]
+feed = "github-release"
+repo = "zed-industries/zed"
+
+# zen-browser: Firefox-based browser, vendor rewrap of the official Linux
+# tarball (upstream ships no distro packages; full brp nil set per
+# obsidian.spec, self-updater disabled via enterprise policy).
+[zen-browser]
+batch = 0
+
+[zen-browser.updates]
+feed = "github-release"
+repo = "zen-browser/desktop"
+
+# emacs-pgtk: GNU Emacs 31 pgtk source build from the ftp.gnu.org tarball
+# (aot native compilation + tree-sitter; heavy ~2h build). The generic
+# github-tag feed can't strip the "emacs-" tag prefix, so a custom feed
+# ranks the emacs-mirror/emacs tags and HEAD-probes the ftp.gnu.org tarball
+# (pretest tags' tarballs live on alpha.gnu.org and would 404 here).
+[emacs-pgtk]
+batch = 0
+
+[emacs-pgtk.updates]
+feed = "custom"
+custom = "emacs-pgtk"
+
+# cava: source build from the upstream release tarball (autotools, all
+# Fedora-available audio backends enabled).
+[zotero]
+batch = 0
+
+[zotero.updates]
+feed = "custom"
+custom = "zotero"
+
+# xwiimote-ng is wired in but has never been through a validated build —
+# its first Copr build is the validation. Watch the first run.
+[ticktick]
+batch = 0
+
+[ticktick.updates]
+feed = "custom"
+custom = "ticktick"
+
+# bitwarden: rewrap of the vendor RPM following
+# github.com/anudeepd/bitwarden-fedora-copr-ci (byte-identical payload, brp
+# hooks unset, per-version GPL text, curated AppStream metainfo). Version
+# sweeps the desktop-v releases of bitwarden/clients.
+[bitwarden]
+batch = 0
+
+[bitwarden.updates]
+feed = "custom"
+custom = "bitwarden"
+
+# obsidian: follows the Arch Linux package (launcher with user-flags file,
+# /usr/lib/obsidian, resources icon, LicenseRef-Obsidian), with the bundled
+# Electron runtime shipped since Fedora has no system electron package. The
+# tarball sha256 is verified in the source step against the GitHub digest.
+[obsidian]
+batch = 0
+
+[obsidian.updates]
+feed = "custom"
+custom = "obsidian"
+
+# The TODO round-2 additions (Sept 2026): a mix of vendor rewraps
+# (opencode-desktop, ferdium, the Google antigravity pair) and source
+# builds (fzf binary wrapper, fzy, kilo tree wrapper, podman-desktop,
+# nwg-displays) — all batch-0 leaves.
+
+# fzf: release-binary wrapper (single static Go binary; completions
+# generated from the binary itself at install time). Shadows Fedora's
+# identical version so updates land here first.
+[opencode-desktop]
+batch = 0
+
+[opencode-desktop.updates]
+feed = "custom"
+custom = "opencode_desktop"
+
+# ferdium: vendor RPM rewrap on the ticktick pattern; tags and releases
+# are 1:1 on ferdium-app.
+[ferdium]
+batch = 0
+
+[ferdium.updates]
+feed = "github-release"
+repo = "ferdium/ferdium-app"
+
+# antigravity-ide / antigravity-cli: Google's proprietary vendor payloads;
+# the download URLs embed per-release execution ids Google exposes nowhere,
+# so both sweep the AUR maintainer's pins (RPC pkgver + the PKGBUILD's
+# _build for the ide).
+[antigravity-ide]
+batch = 0
+
+[antigravity-ide.updates]
+feed = "custom"
+custom = "antigravity_ide"
+
+[antigravity-cli]
+batch = 0
+
+[antigravity-cli.updates]
+feed = "custom"
+custom = "antigravity_cli"
+
+# nwg-displays: pure-Python nwg-shell output configurator (note the plural
+# — upstream is nwg-piotr/nwg-displays).
+[distroshelf]
+batch = 0
+
+[distroshelf.updates]
+feed = "github-release"
+repo = "ranfdev/DistroShelf"
+
+# ------------------------------------------------------------------ tools
+# chafa follows terrapkg's spec (upstream git-tag source build); Fedora
+# carries an older chafa, this one shadows it.
+[onlyoffice-desktopeditors]
+batch = 3
+
+[onlyoffice-desktopeditors.updates]
+feed = "github-release"
+repo = "ONLYOFFICE/DesktopEditors"
+
+# kernel-p03: custom Linux kernel with Firelzrd, CachyOS, TKG, XanMod patches
+# and open-gpu-kernel-modules (upstream: CatPieLeaf/linux-p03). Builds on
+# Fedora 44 with clang + ThinLTO + x86-64-v3 + polly + mimalloc. Heavy build
+# (~1.5-2h) sitting in batch 3 alongside onlyoffice-desktopeditors.
+[private-internet-access]
+batch = 0
+
+[private-internet-access.updates]
+feed = "custom"
+custom = "private-internet-access"
+
+[mullvad-vpn]
+batch = 0
+
+[mullvad-vpn.updates]
+feed = "custom"
+custom = "mullvad-vpn"
+
+# Proton chain: the GUI app + the root daemon and the python components it
+# resolves through, all rewrapped from Proton's official Fedora RPMs.
+[python3-proton-core]
+batch = 0
+
+[python3-proton-core.updates]
+feed = "custom"
+custom = "python3-proton-core"
+
+[python3-proton-keyring-linux]
+batch = 0
+
+[python3-proton-keyring-linux.updates]
+feed = "custom"
+custom = "python3-proton-keyring-linux"
+
+[python3-proton-vpn-api-core]
+batch = 0
+
+[python3-proton-vpn-api-core.updates]
+feed = "custom"
+custom = "python3-proton-vpn-api-core"
+
+[proton-vpn-daemon]
+batch = 0
+
+[proton-vpn-daemon.updates]
+feed = "custom"
+custom = "proton-vpn-daemon"
+
+[proton-vpn-gtk-app]
+batch = 0
+
+[proton-vpn-gtk-app.updates]
+feed = "custom"
+custom = "proton-vpn-gtk-app"

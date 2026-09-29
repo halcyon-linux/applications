@@ -1,0 +1,22 @@
+[Desktop Entry]
+Version=1.0
+Name=Zen Browser
+GenericName=Web Browser
+Comment=Zen Browser is a Firefox-based browser focused on privacy and customization
+Exec=/usr/bin/zen %u
+Icon=zen-browser
+Type=Application
+MimeType=text/html;text/xml;application/xhtml+xml;application/vnd.mozilla.xul+xml;text/mml;x-scheme-handler/http;x-scheme-handler/https;
+Categories=Network;WebBrowser;
+StartupWMClass=zen
+Terminal=false
+StartupNotify=true
+Actions=new-window;private-window;
+
+[Desktop Action new-window]
+Name=New Window
+Exec=/usr/bin/zen --new-window %u
+
+[Desktop Action private-window]
+Name=New Private Window
+Exec=/usr/bin/zen --private-window %u
