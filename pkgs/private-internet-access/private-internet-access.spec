@@ -22,10 +22,15 @@
 %global             debug_package %{nil}
 %global _build_id_links none
 %global             __os_install_post %{nil}
+# the bundle's ELFs were linked against a Qt built with the generic private
+# symbol tag Qt_6_PRIVATE_API (Arch-style); Fedora's qt6-3d provides no
+# provider for that tag and the bundle ships no 3D libs of its own — the
+# public Qt_6 requires stay and resolve from Fedora's qt6-3d
+%global             __requires_exclude ^libQt6.*Qt_6_PRIVATE_API.*$
 
 Name:               private-internet-access
 Version:            3.7.2
-Release:            2%{?dist}
+Release:            3%{?dist}
 Summary:            Private Internet Access VPN client (official installer rewrap)
 License:            LicenseRef-PIA
 URL:                https://www.privateinternetaccess.com
@@ -117,6 +122,9 @@ setcap cap_net_bind_service=ep /opt/piavpn/bin/pia-unbound || :
 /opt/piavpn/
 
 %changelog
+* Wed Sep 30 2026 halcyon-autoupdate <aahsnr041@proton.me> - 3.7.2-3
+- exclude the unresolvable Qt_6_PRIVATE_API auto-requires (upstream's Qt
+  uses the generic private tag; Fedora's qt6-3d only satisfies the public ones)
 * Wed Sep 30 2026 halcyon-autoupdate <aahsnr041@proton.me> - 3.7.2-2
 - install fix: create bindir before linking piactl into it
 * Tue Sep 29 2026 halcyon-autoupdate <aahsnr041@proton.me> - 3.7.2-1
