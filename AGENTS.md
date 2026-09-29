@@ -66,6 +66,11 @@ mock -r /tmp/copr.cfg <srpm>
   CASCADE_ENABLED repository variable (kill-switch — set it to `false` to
   stop automatic cascades; `workflow_dispatch` bypasses it). PRs run
   validation only.
+- copr-build.yml defines exactly the waves this repo uses — batch 0
+  through the registry's highest batch (empty in-between levels skip).
+  When you add a package in a NEW highest batch, first add its
+  submitN/waitN pair to copr-build.yml (copy the previous pair), or the
+  manifest would emit a wave with no job to submit it.
 - Touching `ci/**` or `.github/builder/**` makes `ci/matrix.py` rebuild
   _every_ package in this repo (`INFRA_PREFIXES`).
 - **Version bumps are automatic** (`update.yml`, weekly Monday floor +
