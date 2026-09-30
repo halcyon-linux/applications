@@ -54,7 +54,7 @@
 %global __requires_exclude ^libffmpeg\.so
 
 Name:           bitwarden
-Version:	2026.9.0
+Version:	2026.9.1-beta.1
 Release:        1%{?dist}
 Summary:        A secure and free password manager for all of your devices
 License:        GPL-3.0-only
