@@ -64,8 +64,17 @@ class SpecFile:
     def set_version(self, version: str, reset_release: bool = True) -> bool:
         """rpm.version() port: strip a leading `v`, rewrite the Version value,
         reset Release to 1%{?dist} — only when the version really changes.
-        Returns whether anything was rewritten."""
+        Returns whether anything was rewritten.
+
+        RPM Version forbids '-' (the Version/Release separator); upstream
+        pre-release tags (bitwarden's 2026.9.1-beta.1) are sanitized to tilde
+        form, which vercmp orders as pre-release. A spec that defines an
+        %global upstream_version opts in to carrying the RAW upstream string
+        (Source URLs usually need it) — it is kept in sync here."""
         version = version.removeprefix("v")
+        if self.get_global("upstream_version") is not None:
+            self.set_global("upstream_version", version)
+        version = version.replace("-", "~")
         if version == self.get_version():
             return False
         text = re.sub(

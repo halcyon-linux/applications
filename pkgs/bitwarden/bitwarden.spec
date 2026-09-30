@@ -53,8 +53,13 @@
 # Every other DT_NEEDED entry is a system library and stays auto-detected.
 %global __requires_exclude ^libffmpeg\.so
 
+# upstream tags pre-releases with '-' (desktop-v2026.9.1-beta.1), which RPM
+# Version forbids — the sweep carries the raw tag in upstream_version (both
+# Source URLs need it) and stores the tilde form in Version.
+%global          upstream_version 2026.9.1-beta.1
+
 Name:           bitwarden
-Version:	2026.9.1-beta.1
+Version:	2026.9.1~beta.1
 Release:        1%{?dist}
 Summary:        A secure and free password manager for all of your devices
 License:        GPL-3.0-only
@@ -62,7 +67,7 @@ URL:            https://bitwarden.com
 ExclusiveArch:  x86_64
 
 #!RemoteAsset
-Source0:        https://github.com/bitwarden/clients/releases/download/desktop-v%{version}/Bitwarden-%{version}-x86_64.rpm
+Source0:        https://github.com/bitwarden/clients/releases/download/desktop-v%{upstream_version}/Bitwarden-%{upstream_version}-x86_64.rpm
 # Upstream prebuilt RPM ships no GPL text (only Electron/Chromium notices
 # under /opt). mock fetches LICENSE_GPL.txt (Source1, pinned to the release
 # tag) at SRPM-build time, so the packaged license always matches the
@@ -70,7 +75,7 @@ Source0:        https://github.com/bitwarden/clients/releases/download/desktop-v
 # LICENSE.txt ("GPL-3.0 unless the header specifies another license";
 # Bitwarden-licensed files live only in /bitwarden_license).
 #!RemoteAsset
-Source1:        https://raw.githubusercontent.com/bitwarden/clients/desktop-v%{version}/LICENSE_GPL.txt
+Source1:        https://raw.githubusercontent.com/bitwarden/clients/desktop-v%{upstream_version}/LICENSE_GPL.txt
 # Upstream ships no AppStream metadata at all, so this repo ships a curated
 # file under the RDNS id com.bitwarden.desktop (the id Bitwarden itself
 # uses; it matches the Icon and StartupWMClass in bitwarden.desktop).
