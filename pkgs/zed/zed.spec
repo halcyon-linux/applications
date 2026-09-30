@@ -10,7 +10,7 @@
 %global             __os_install_post %{nil}
 
 Name:               zed
-Version:            1.21.0
+Version:            1.22.0
 Release:            1%{?dist}
 Summary:            A high-performance, multiplayer code editor
 License:            Apache-2.0 AND GPL-3.0-or-later
