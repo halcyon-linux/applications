@@ -14,8 +14,7 @@ Feed types:
   github-release  latest GitHub release tag of `repo` (leading v stripped)
   github-tag      newest git tag of `repo` (releases or not)
   custom          feeds.custom.custom_<name>() — the ported rhai logic
-Packages without an [pkg.updates] table (the texlive-* rolling groups,
-snapshot by tools/texlive-splitter) are never swept.
+Packages without an [pkg.updates] table are never swept.
 
 Usage:
   ci/sweep/sweep.py [--pkg NAME ...] [--dry-run] [--list]
@@ -56,7 +55,7 @@ def load_swept() -> dict[str, tuple[dict, Path, Path]]:
     for name, entry in data.items():
         updates = entry.get("updates")
         if not updates:
-            continue  # texlive-* etc: rolled by texlive-update.yml, never swept
+            continue  # no feed configured: never swept
         base = REPO_ROOT / "pkgs" / name
         spec_path = base / f"{name}.spec"
         if not spec_path.is_file():
@@ -112,7 +111,7 @@ def main() -> None:
         try:
             wrote, old_version, new_version = sweep_one(name, updates, spec_path, base)
         except (feeds.FeedError, SpecError, OSError, ValueError, KeyError,
-                TypeError, subprocess.SubprocessError) as exc:
+                TypeError, IndexError, subprocess.SubprocessError) as exc:
             # OSError covers urllib errors, ValueError malformed JSON,
             # KeyError/TypeError a malformed API payload, SubprocessError a
             # failing date/rpmspec — one broken feed must not abort the

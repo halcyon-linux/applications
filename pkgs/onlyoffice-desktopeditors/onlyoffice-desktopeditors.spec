@@ -2,8 +2,8 @@
 # builds for el7 and publishes the prebuilt suite (bundled Qt5, CEF/Chromium
 # and ICU under /opt/onlyoffice) with no source build feasible. The payload
 # ships byte-identical; this spec only rehomes it for Fedora 44 and adds the
-# AppStream metadata the vendor omits. Served from the aahsnr-work/halcyon
-# Copr project like every other package (batch 4, the heavy wave).
+# AppStream metadata the vendor omits. Served from the applications
+# Copr project like every other package (batch 0).
 #
 # Prebuilt foreign binary: no build-id or debuginfo can be produced, so the
 # debug package is disabled.

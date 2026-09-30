@@ -18,11 +18,10 @@ applications · fonts · texlive-packages · linux-p03.
   only.
 - `update.yml` — the upstream version sweep (`ci/sweep/sweep.py` over the
   registry's `[pkg.updates]` feeds), commits bumps straight to `main`.
-- `repoclosure.yml` — nightly (05:43 UTC) + post-cascade closure check of
-
 - `builder-docker.yml` — builds this repo's own CI job image and pushes
   it to `ghcr.io/halcyon-linux/applications-builder:f44` (consumed by this
   repo's build and sweep jobs).
+- `repoclosure.yml` — nightly (05:43 UTC) + post-cascade closure check of
   the published Copr repo against Fedora 44/45 (+ Terra and the
   lionheartp bootstrap repo).
 
@@ -33,7 +32,7 @@ ci/packages.toml    the registry: build selection + sweep-feed config
 ci/matrix.py        batch/wave build plan (validate job runs it)
 ci/sweep/           the version sweeper + custom feeds
 pkgs/<pkg>/         spec + local sources
-repo/               consumer .repo drop-ins (all six group repos)
+repo/               the applications.repo consumer drop-in
 templates/          starting points for new specs
 ```
 

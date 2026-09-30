@@ -65,16 +65,36 @@ def custom_antigravity_ide(spec: SpecFile, pkg_dir: Path) -> None:
         "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=antigravity-ide")
     spec.set_version(pkgver)
     spec.set_global("ide_build", feeds.find_group(r"(?m)^_build=(\d+)", pkgtxt))
+    # the vendor tarball digest changes with every release and the spec's
+    # %prep b2sum -c gates on it — a version bump without the matching digest
+    # is a guaranteed %prep failure
+    b2sum = feeds.find_group(r"(?m)^b2sums_x86_64=\('([0-9a-f]{128})", pkgtxt)
+    if not b2sum:
+        raise feeds.FeedError("antigravity-ide: no b2sums_x86_64 digest in the AUR PKGBUILD")
+    spec.set_global("vendor_b2sum", b2sum)
 
 
 def custom_bitwarden(spec: SpecFile, pkg_dir: Path) -> None:
-    # bitwarden/clients cuts other tags too; the raw-text scan picks the first
-    # desktop-v tag of the releases list (GitHub orders newest-first).
-    text = feeds.fetch_text(
+    # bitwarden/clients cuts other tags too, and pre-releases (betas) often
+    # ship no Linux RPM at all (the 2026.9.1-beta.1 assets are Windows/macOS
+    # only) — the first desktop-v tag is therefore not enough. Walk the
+    # releases newest-first and take the first desktop-v release that
+    # actually carries the x86_64 RPM asset Source0 needs.
+    releases = feeds.fetch_json(
         "https://api.github.com/repos/bitwarden/clients/releases?per_page=30"
     )
-    tag = feeds.find_group(r'"tag_name":"desktop-v([^"]+)"', text)
-    spec.set_version(tag)
+    for release in releases:
+        tag = release.get("tag_name", "")
+        if not tag.startswith("desktop-v"):
+            continue
+        version = tag.removeprefix("desktop-v")
+        assets = {a.get("name", "") for a in release.get("assets", [])}
+        if f"Bitwarden-{version}-x86_64.rpm" in assets:
+            spec.set_version(version)
+            return
+    raise feeds.FeedError(
+        "bitwarden: no desktop-v release in the last 30 ships a Bitwarden-<ver>-x86_64.rpm"
+    )
 
 
 def custom_bun(spec: SpecFile, pkg_dir: Path) -> None:
@@ -562,7 +582,13 @@ def _proton_rpm_version(ghrepo: str, rpm_name: str, srcarch: str, spec: SpecFile
 
     fc = spec.get_global("pv_fc") or "44"
     rel = spec.get_global("pv_rel") or "1"
+    # /tags order is not newest-first (feeds.github_tag_names warns) — sort
+    # with rpmvercmp so a tag-order hiccup can never bump the spec DOWN to an
+    # older still-published RPM
+    from functools import cmp_to_key
+    from vercmp import rpmvercmp
     tags = [t.removeprefix("v") for t in feeds.github_tag_names(f"ProtonVPN/{ghrepo}")]
+    tags.sort(key=cmp_to_key(rpmvercmp), reverse=True)
     for version in tags:
         if not re.fullmatch(r"[0-9][0-9.]*", version):
             continue

@@ -120,8 +120,9 @@ jobs:
           done
           echo "bumped and pushed: ${pkgs}"
           # a GITHUB_TOKEN push does not trigger workflow runs — dispatch the
-          # cascade explicitly
-          GH_TOKEN="${{ github.token }}" gh workflow run copr-build.yml --ref main
+          # cascade explicitly, scoped to the bumped packages (an unscoped
+          # dispatch builds the whole registry on every bump wave)
+          GH_TOKEN="${{ github.token }}" gh workflow run copr-build.yml --ref main -f only="${pkgs}"
       - name: Open a bump PR (mode=pr)
         if: env.MODE == 'pr' && success()
         env:

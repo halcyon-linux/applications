@@ -113,10 +113,9 @@ mock -r /tmp/copr.cfg <srpm>
   - `install -t DIR SRC` keeps SRC's basename — `%files` must claim the
     name as installed. Prefer explicit
     `install -Dm644 SRC %{buildroot}%{dir}/NAME`.
-- `repo/` carries the consumer drop-ins for **all six** group repos —
-  repoclosure installs all of them and checks THIS repo's project against
-  the union, exactly what a halcyon-image consumer sees. The
-  *_mirror.repo alternative is never installed by CI.
+- `repo/` carries this project's consumer drop-in (`applications.repo`);
+  repoclosure installs it (plus Terra and the lionheartp bootstrap,
+  written inline) and checks the published repo against that view.
 - **CI authentication**: the `COPR_CLICONF` GitHub secret drives every
   copr-cli step. The Copr API token expires — a wave of 401s in
   copr-build.yml means: regenerate at

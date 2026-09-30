@@ -83,8 +83,8 @@ def git_rev_exists(rev: str) -> bool:
 
 
 def package_paths(name: str) -> tuple[Path, Path]:
-    """Spec location for a registry name: every package (hand-maintained or
-    generated, the texlive-* groups included) lives at pkgs/<name>/<name>.spec."""
+    """Spec location for a registry name: every package lives at
+    pkgs/<name>/<name>.spec."""
     base = REPO_ROOT / "pkgs" / name
     spec = base / f"{name}.spec"
     return base, spec

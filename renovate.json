@@ -46,7 +46,7 @@
         "docker"
       ],
       "matchPackageNames": [
-        "ghcr.io/aahsnr-work/halcyon-builder"
+        "ghcr.io/halcyon-linux/applications-builder"
       ],
       "enabled": false
     }

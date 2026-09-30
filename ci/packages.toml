@@ -10,8 +10,9 @@
 # to the project repo, so a package may rely on anything built in a lower
 # batch. Packages inside one batch must therefore never depend on each other.
 #
-# batch 0  leaf apps, vendor rewraps and wrappers (everything except below)
-# batch 3  onlyoffice-desktopeditors (heavy source build, own wave)
+# batch 0  every package — none BuildRequires another registry package, so
+#          the whole registry builds in one wave (onlyoffice's heavy source
+#          build included; batch semantics are dependency levels, not weight)
 # The optional [pkg.updates] table drives the daily sweep (update.yml):
 #   feed = "github-release"  + repo = "owner/name"   latest GitHub release tag
 #   feed = "github-tag"      + repo = "owner/name"   newest git tag
@@ -59,8 +60,9 @@ batch = 0
 feed = "custom"
 custom = "emacs-pgtk"
 
-# cava: source build from the upstream release tarball (autotools, all
-# Fedora-available audio backends enabled).
+# zotero: rewrap of upstream's user-facing Linux tarball; the sweep
+# HEAD-probes the tarball URL (10.0.4+ tarballs 403 the probe — documented
+# in custom_zotero).
 [zotero]
 batch = 0
 
@@ -68,8 +70,8 @@ batch = 0
 feed = "custom"
 custom = "zotero"
 
-# xwiimote-ng is wired in but has never been through a validated build —
-# its first Copr build is the validation. Watch the first run.
+# ticktick: vendor rewrap of the official cloudfront .rpm; the version
+# sweeps the AUR maintainer's pkgver pin.
 [ticktick]
 batch = 0
 
@@ -99,14 +101,6 @@ batch = 0
 feed = "custom"
 custom = "obsidian"
 
-# The TODO round-2 additions (Sept 2026): a mix of vendor rewraps
-# (opencode-desktop, ferdium, the Google antigravity pair) and source
-# builds (fzf binary wrapper, fzy, kilo tree wrapper, podman-desktop,
-# nwg-displays) — all batch-0 leaves.
-
-# fzf: release-binary wrapper (single static Go binary; completions
-# generated from the binary itself at install time). Shadows Fedora's
-# identical version so updates land here first.
 [opencode-desktop]
 batch = 0
 
@@ -141,8 +135,8 @@ batch = 0
 feed = "custom"
 custom = "antigravity_cli"
 
-# nwg-displays: pure-Python nwg-shell output configurator (note the plural
-# — upstream is nwg-piotr/nwg-displays).
+# distroshelf: GNOME GUI for distrobox containers (ranfdev/DistroShelf);
+# ships the distroshelf-helper launcher stub alongside the app.
 [distroshelf]
 batch = 0
 
@@ -151,19 +145,18 @@ feed = "github-release"
 repo = "ranfdev/DistroShelf"
 
 # ------------------------------------------------------------------ tools
-# chafa follows terrapkg's spec (upstream git-tag source build); Fedora
-# carries an older chafa, this one shadows it.
+# onlyoffice-desktopeditors: heavy vendor rewrap of ONLYOFFICE's el7-built
+# suite (bundled Qt5/CEF/ICU under /opt/onlyoffice).
 [onlyoffice-desktopeditors]
-batch = 3
+batch = 0
 
 [onlyoffice-desktopeditors.updates]
 feed = "github-release"
 repo = "ONLYOFFICE/DesktopEditors"
 
-# kernel-p03: custom Linux kernel with Firelzrd, CachyOS, TKG, XanMod patches
-# and open-gpu-kernel-modules (upstream: CatPieLeaf/linux-p03). Builds on
-# Fedora 44 with clang + ThinLTO + x86-64-v3 + polly + mimalloc. Heavy build
-# (~1.5-2h) sitting in batch 3 alongside onlyoffice-desktopeditors.
+# private-internet-access: vendor rewrap of the official self-contained
+# installer; sweeps the AUR piavpn-bin pins (version, build id, tarball
+# digest) — see the spec header for the Qt require exclusions.
 [private-internet-access]
 batch = 0
 
