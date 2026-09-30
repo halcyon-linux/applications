@@ -23,14 +23,18 @@
 %global _build_id_links none
 %global             __os_install_post %{nil}
 # the bundle's ELFs were linked against a Qt built with the generic private
-# symbol tag Qt_6_PRIVATE_API (Arch-style); Fedora's qt6-3d provides no
-# provider for that tag and the bundle ships no 3D libs of its own — the
-# public Qt_6 requires stay and resolve from Fedora's qt6-3d
-%global             __requires_exclude ^libQt6.*Qt_6_PRIVATE_API.*$
+# symbol tag Qt_6_PRIVATE_API (Arch-style); Fedora's Qt emits per-minor tags
+# (e.g. Qt_6.11_PRIVATE_API), so no Fedora repo provides the generic tag —
+# exclude it. Fedora 44 additionally ships NO libQt6Bodymovin.so.6 at all
+# (the Qt3D Lottie lib is gone from the 6.11 stack and qt6-qtlottie ships
+# none — verified against the release+updates repodata), so the public
+# Bodymovin sonames are excluded too. The bundle ships no 3D libs of its
+# own; every other public Qt_6 requires still resolves from Fedora's qt6-3d.
+%global             __requires_exclude ^libQt6.*Qt_6_PRIVATE_API.*$|^libQt6Bodymovin\.so.*$
 
 Name:               private-internet-access
 Version:            3.7.2
-Release:            3%{?dist}
+Release:            4%{?dist}
 Summary:            Private Internet Access VPN client (official installer rewrap)
 License:            LicenseRef-PIA
 URL:                https://www.privateinternetaccess.com
