@@ -13,7 +13,7 @@
 # The version source is the AUR package itself (the AUR RPC API) — the AUR
 # maintainer tracks upstream; there is still no first-party version feed.
 Name:           ticktick
-Version:        8.0.11
+Version:        8.0.20
 Release:        1%{?dist}
 Summary:        Official desktop application for Linux
 License:        LicenseRef-Proprietary
