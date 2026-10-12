@@ -10,7 +10,7 @@
 %global             __os_install_post %{nil}
 
 Name:               zen-browser
-Version:            1.23b
+Version:            1.23.2b
 Release:            1%{?dist}
 Summary:            Zen Browser — a Firefox-based browser focused on privacy and customization
 License:            MPL-2.0
