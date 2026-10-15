@@ -37,7 +37,7 @@
 %global __requires_exclude_from ^/opt/onlyoffice/
 
 Name:           onlyoffice-desktopeditors
-Version:        9.4.0
+Version:        10.0.0
 Release:        1%{?dist}
 Summary:        Office productivity suite with text, spreadsheet and presentation editors
 
