@@ -6,7 +6,7 @@
 # non-derivable build id); the sweep reads pkgver off the AUR PKGBUILD.
 Name:           antigravity-cli
 Version:        1.3.2
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Google's agentic development platform (CLI companion)
 License:        LicenseRef-Proprietary
 URL:            https://antigravity.google/product/antigravity-cli
@@ -19,8 +19,6 @@ Source1:        LICENSE
 ExclusiveArch:  x86_64
 
 Requires:       glibc
-# the CLI authenticates and shares session state with the desktop app
-Recommends:     antigravity-ide
 
 %define debug_package %{nil}
 %global _build_id_links none
@@ -48,6 +46,8 @@ install -Dm644 %{SOURCE1} %{buildroot}%{_licensedir}/%{name}/LICENSE
 %license %{_licensedir}/%{name}/LICENSE
 
 %changelog
+* Fri Oct 16 2026 halcyon-autoupdate <aahsnr041@proton.me> - 1.3.2-2
+- drop Recommends: antigravity-ide (package removed from the repo)
 * Sat Sep 26 2026 halcyon-autobuild - 1.2.10-1
 - initial package: vendor linux-x64 binary rewrap on the AUR pattern
 - version + build id swept from the AUR PKGBUILD

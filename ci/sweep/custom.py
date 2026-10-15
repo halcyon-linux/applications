@@ -56,24 +56,6 @@ def custom_antigravity_cli(spec: SpecFile, pkg_dir: Path) -> None:
     spec.set_global("cli_build", m.group(2))
 
 
-def custom_antigravity_ide(spec: SpecFile, pkg_dir: Path) -> None:
-    # no first-party feed — the download URL embeds a per-release execution
-    # id Google does not expose anywhere — so mirror the AUR maintainer's
-    # pins: pkgver for the version, the PKGBUILD's _build for the id
-    pkgver = _aur_pkgver("antigravity-ide")
-    pkgtxt = feeds.fetch_text(
-        "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=antigravity-ide")
-    spec.set_version(pkgver)
-    spec.set_global("ide_build", feeds.find_group(r"(?m)^_build=(\d+)", pkgtxt))
-    # the vendor tarball digest changes with every release and the spec's
-    # %prep b2sum -c gates on it — a version bump without the matching digest
-    # is a guaranteed %prep failure
-    b2sum = feeds.find_group(r"(?m)^b2sums_x86_64=\('([0-9a-f]{128})", pkgtxt)
-    if not b2sum:
-        raise feeds.FeedError("antigravity-ide: no b2sums_x86_64 digest in the AUR PKGBUILD")
-    spec.set_global("vendor_b2sum", b2sum)
-
-
 def custom_bees(spec: SpecFile, pkg_dir: Path) -> None:
     # Zygo/bees publishes no GitHub releases and tags prereleases as
     # vX.Y.Z-rcN; rpmvercmp ranks a suffixed tag above its release

@@ -117,17 +117,9 @@ batch = 0
 feed = "github-release"
 repo = "ferdium/ferdium-app"
 
-# antigravity-ide / antigravity-cli: Google's proprietary vendor payloads;
-# the download URLs embed per-release execution ids Google exposes nowhere,
-# so both sweep the AUR maintainer's pins (RPC pkgver + the PKGBUILD's
-# _build for the ide).
-[antigravity-ide]
-batch = 0
-
-[antigravity-ide.updates]
-feed = "custom"
-custom = "antigravity_ide"
-
+# antigravity-cli: Google's proprietary vendor payload; the download URL
+# embeds a per-release execution id Google exposes nowhere, so the sweep
+# reads the AUR maintainer's pins (RPC pkgver + the PKGBUILD's _build).
 [antigravity-cli]
 batch = 0
 
