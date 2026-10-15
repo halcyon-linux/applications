@@ -74,6 +74,23 @@ def custom_antigravity_ide(spec: SpecFile, pkg_dir: Path) -> None:
     spec.set_global("vendor_b2sum", b2sum)
 
 
+def custom_bees(spec: SpecFile, pkg_dir: Path) -> None:
+    # Zygo/bees publishes no GitHub releases and tags prereleases as
+    # vX.Y.Z-rcN; rpmvercmp ranks a suffixed tag above its release
+    # ("0.11-rc4" beats "0.11" — end-of-string loses to any leftover
+    # segment) and the Version rewrite would then sanitize the hyphen,
+    # breaking the archive Source URL. Take the newest tag with no suffix.
+    from functools import cmp_to_key
+    from vercmp import rpmvercmp
+    tags = [t.removeprefix("v") for t in feeds.github_tag_names("Zygo/bees")]
+    tags.sort(key=cmp_to_key(rpmvercmp), reverse=True)
+    for version in tags:
+        if re.fullmatch(r"[0-9][0-9.]*", version):
+            spec.set_version(version)
+            return
+    raise feeds.FeedError("bees: no stable tag on Zygo/bees")
+
+
 def custom_bitwarden(spec: SpecFile, pkg_dir: Path) -> None:
     # bitwarden/clients cuts other tags too, and pre-releases (betas) often
     # ship no Linux RPM at all (the 2026.9.1-beta.1 assets are Windows/macOS

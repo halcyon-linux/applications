@@ -207,3 +207,14 @@ batch = 0
 [proton-vpn-gtk-app.updates]
 feed = "custom"
 custom = "proton-vpn-gtk-app"
+
+# bees: btrfs dedupe agent (Zygo/bees), source build imported from
+# bazzite's spec_files/bees (0.11 + its four downstream patches) — Fedora
+# still carries 0.10. Custom feed: upstream tags rc prereleases and ships
+# no GitHub releases, which the generic feeds cannot rank correctly.
+[bees]
+batch = 0
+
+[bees.updates]
+feed = "custom"
+custom = "bees"
