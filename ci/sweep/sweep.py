@@ -17,7 +17,7 @@ Feed types:
 Packages without an [pkg.updates] table are never swept.
 
 Usage:
-  ci/sweep/sweep.py [--pkg NAME ...] [--dry-run] [--list]
+  ci/sweep/sweep.py [--pkg NAME ...] [--list]
 
 Exits 1 when any feed failed (the workflow surfaces it); a feed error never
 blocks the other packages.
@@ -90,7 +90,6 @@ def sweep_one(name: str, updates: dict, spec_path: Path, base: Path) -> tuple[bo
 def main() -> None:
     ap = argparse.ArgumentParser(description="halcyon-packages version sweep")
     ap.add_argument("--pkg", nargs="+", help="sweep only these packages (default: all swept)")
-    ap.add_argument("--dry-run", action="store_true", help="do not write any spec")
     ap.add_argument("--list", action="store_true", help="print the swept packages and exit")
     args = ap.parse_args()
 
