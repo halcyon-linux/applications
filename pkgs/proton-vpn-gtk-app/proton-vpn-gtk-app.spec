@@ -17,7 +17,7 @@
 %global _build_id_links none
 %global             __os_install_post %{nil}
 Name:               proton-vpn-gtk-app
-Version:            4.18.7
+Version:            4.18.8
 Release:            1%{?dist}
 Summary:            Proton VPN GTK4 desktop client
 License:            GPL-3.0-or-later

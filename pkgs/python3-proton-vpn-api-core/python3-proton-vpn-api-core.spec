@@ -18,7 +18,7 @@
 %global             __os_install_post %{nil}
 ExclusiveArch:      x86_64
 Name:               python3-proton-vpn-api-core
-Version:            5.8.7
+Version:            5.8.11
 Release:            1%{?dist}
 Summary:            Proton VPN API facade with the integrated NetworkManager backend and Rust services
 License:            GPL-3.0-or-later
