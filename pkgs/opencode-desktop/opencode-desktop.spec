@@ -7,7 +7,7 @@
 %global _build_id_links none
 
 Name:           opencode-desktop
-Version:        2.0.30
+Version:        2.0.32
 Release:        1%{?dist}
 Summary:        OpenCode desktop client
 
