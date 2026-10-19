@@ -82,7 +82,12 @@ jobs:
         run: |
           git config user.name "halcyon-autoupdate"
           git config user.email "aahsnr041@proton.me"
+      # continue-on-error: one broken upstream feed must not discard the
+      # good bumps the sweep already wrote — the commit below lands whatever
+      # succeeded, and the final step turns the run red for visibility
       - name: Sweep upstream versions
+        id: sweep
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
@@ -95,7 +100,7 @@ jobs:
             python3 ci/sweep/sweep.py
           fi
       - name: Commit the bumps (mode=commit)
-        if: env.MODE == 'commit' && success()
+        if: env.MODE == 'commit' && !cancelled()
         run: |
           set -eu
           if [ -z "$(git status --porcelain)" ]; then
@@ -142,3 +147,10 @@ jobs:
           gh pr create --head "bump/${date_tag}" \
             --title "chore(bump): upstream versions $(date -u +%Y-%m-%d)" \
             --body "Automated by .github/workflows/update.yml (\`ci/sweep/sweep.py\`). Review the version transitions and merge — copr-build.yml then builds the changed packages and every package in a higher batch."
+      - name: Fail the run if a feed errored
+        # the bumps above already landed; failing here only flags the broken
+        # feed (red run + notifications) — it never blocks the other bumps
+        if: steps.sweep.outcome == 'failure'
+        run: |
+          echo "one or more upstream feeds failed — see the sweep log above" >&2
+          exit 1
