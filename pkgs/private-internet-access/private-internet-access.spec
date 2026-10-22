@@ -18,7 +18,7 @@
 # (a %%files %%caps entry would duplicate the /opt/piavpn dir glob).
 # The pia iproute2 routing table is registered by the daemon itself at
 # runtime (upstream's uninstaller merely cleans it up).
-%global             pia_build 08420
+%global             pia_build 08539
 %global             debug_package %{nil}
 %global _build_id_links none
 %global             __os_install_post %{nil}
@@ -33,8 +33,8 @@
 %global             __requires_exclude ^libQt6.*Qt_6_PRIVATE_API.*$|^libQt6Bodymovin\.so.*$
 
 Name:               private-internet-access
-Version:            3.7.2
-Release:            4%{?dist}
+Version:            3.8.0
+Release:            1%{?dist}
 Summary:            Private Internet Access VPN client (official installer rewrap)
 License:            LicenseRef-PIA
 URL:                https://www.privateinternetaccess.com
