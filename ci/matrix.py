@@ -10,11 +10,12 @@ Selection semantics:
 
   --since REV   every package whose pkgs/<name>/ directory changed since REV,
                 plus its transitive dependents (packages that BuildRequire
-                it, resolved from the specs). Touches under ci/ or
-                .github/builder/ rebuild everything, as does a push that
-                touches no registered package. A spec whose BuildRequires
-                cannot be parsed confidently is seeded on every lower-batch
-                change (with its own dependents following).
+                it, resolved from the specs). Touches under ci/,
+                .github/builder/ or the build workflow itself rebuild
+                everything. A change that touches no build input at all
+                (docs, templates) rebuilds nothing. A spec whose
+                BuildRequires cannot be parsed confidently is seeded on every
+                lower-batch change (with its own dependents following).
   no --since    the whole registry (first submission / manual full runs).
 
 Batch numbers come from ci/packages.toml, which stays the dependency-order
@@ -45,8 +46,12 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PACKAGES_FILE = REPO_ROOT / "ci" / "packages.toml"
-# Paths whose changes invalidate every package (infrastructure).
-INFRA_PREFIXES = ("ci/", ".github/builder/")
+# Paths whose changes invalidate every package (infrastructure). Mirrors the
+# push-trigger paths of .github/workflows/copr-build.yml: the registry, the
+# sweeper, the builder image and the build workflow itself are build inputs
+# for EVERY package; anything else (docs, templates, the consumer drop-in) is
+# not, and must not cost a full rebuild of the whole registry.
+INFRA_PREFIXES = ("ci/", ".github/builder/", ".github/workflows/copr-build.yml")
 ARCH = "x86_64"
 # the Copr projects a package can build into (ci/packages.toml `project`
 # field; absent = this repository's project). Each project must own a disjoint set
@@ -154,13 +159,20 @@ def _br_tokens(spec: Path) -> tuple[list[str], bool] | None:
     A macro-wrapped name (token starting with %) cannot be resolved
     statically; such specs are handled conservatively by the caller
     instead of failing the whole selection. Conditional macro suffixes
-    (qt6-qtbase-devel%{?_isa}) are stripped before resolution."""
+    (qt6-qtbase-devel%{?_isa}) are stripped before resolution.
+
+    EVERY name on a BuildRequires line is collected, not just the first:
+    `BuildRequires: foo-devel bar-devel` is two requirements, and missing
+    the second one would silently drop bar-devel's dependents from the
+    rebuild set. A requirement stops at its comparison operator, so
+    `BuildRequires: foo >= 1.2` yields `foo` and not `>=`."""
     try:
         text = spec.read_text(errors="replace")
     except OSError:
         return None
     tokens: list[str] = []
     conservative = False
+    expect_version = False
     for line in text.splitlines():
         stripped = line.strip()
         if not stripped.lower().startswith("buildrequires:"):
@@ -168,13 +180,19 @@ def _br_tokens(spec: Path) -> tuple[list[str], bool] | None:
         value = stripped.split(":", 1)[1].strip()
         if not value:
             continue
-        token = value.split()[0]
-        if token.startswith("%"):
-            conservative = True
-            continue
-        token = token.split("%", 1)[0]
-        if token:
-            tokens.append(token)
+        for token in value.split():
+            if expect_version:
+                expect_version = False   # the version of the constraint above
+                continue
+            if token in (">=", "<=", "==", ">", "<", "="):
+                expect_version = True
+                continue
+            if token.startswith("%"):
+                conservative = True
+                continue
+            token = token.split("%", 1)[0]
+            if token:
+                tokens.append(token)
     return tokens, conservative
 
 
@@ -270,13 +288,23 @@ def select_since(pkgs: dict[str, dict], rev: str) -> set[str]:
         if p.startswith("pkgs/") and len(p.split("/")) > 2
     }
     dirs = {d for d in dirs if d in pkgs}
-    if infra or not dirs:
+    if infra:
         print(
-            f"{'infrastructure changed' if infra else 'no registered package changed'}"
-            f" in {rev}..HEAD -> all packages",
+            f"infrastructure changed in {rev}..HEAD -> all packages",
             flush=True,
         )
         return set(pkgs)
+    if not dirs:
+        # Nothing that feeds a build changed (a docs-only or template-only
+        # commit). Rebuilding the whole registry here would burn build-farm
+        # time for no new bits — the old "no registered package changed means
+        # rebuild everything" rule was a safety net for a repository that had
+        # no registry yet.
+        print(
+            f"no build input changed in {rev}..HEAD -> nothing to build",
+            flush=True,
+        )
+        return set()
     selected = dependents_closure(pkgs, dirs)
     batches = sorted({pkgs[n]["batch"] for n in selected})
     print(
