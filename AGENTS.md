@@ -17,6 +17,19 @@ dnf copr enable aahsnr-work/applications fedora-44
 Fedora 44 is the target; the fc45 chroot exists so closure and build
 breakage surfaces one release early.
 
+**The Copr repos are consumed by the custom atomic OCI image, not by a
+desktop install.** Every halcyon Copr repo (this one and the five sibling
+group repos) exists to feed packages into that image build. A machine with
+the halcyon repos *disabled* in `/etc/yum.repos.d/` — `enabled=0`, so the
+repo contributes nothing and `dnf` reports the group as empty — is
+therefore **by design, not a misconfiguration**: do not "fix" it, do not
+treat a disabled or empty halcyon Copr repo as a missing/broken package
+source, and do not enable the repos to make a local `dnf` query work. Use
+`dnf repoquery --repoid=...` against the enabled-by-url repo or the Copr
+web UI when a package's published state has to be checked, and treat
+"the repo is not enabled locally" as a fact about the consumer, not about
+the package.
+
 **Markdown discipline**: do NOT read, use, or act on `TODO.md`, `notes/` or
 any other markdown file unless the user explicitly instructs you to utilize
 that particular markdown file for the task at hand. Code, the registry
