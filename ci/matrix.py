@@ -26,11 +26,10 @@ The same registry carries each package's [pkg.updates] sweep configuration
 (consumed by ci/sweep/sweep.py); matrix.py ignores it.
 
 Usage:
-  ci/matrix.py [--since REV] [--only PKG...] [--batch N ...] [--list]
-               [--label LABEL=VALUE]
+  ci/matrix.py [--since REV] [--only PKG...] [--list]
 
-With --label each emitted entry carries extra labels (the workflow uses
-labels.batch to wave the matrix). Without --list the script prints
+Each emitted entry carries the registry's labels (batch, project); the
+workflow waves the matrix by labels.batch. Without --list the script prints
 `build_matrix=...` on stdout plus `batches=N,M,...` so the workflow knows
 which waves exist without re-parsing the JSON.
 """
@@ -131,10 +130,9 @@ def load_packages() -> dict[str, dict]:
 def select(
     pkgs: dict[str, dict],
     only: list[str] | None,
-    batches: list[int] | None,
     since: str | None,
 ) -> set[str]:
-    """Resolve --only / --batch / --since into the package names to build."""
+    """Resolve --only / --since into the package names to build."""
     if only and since:
         die("--only and --since are mutually exclusive")
 
@@ -147,8 +145,6 @@ def select(
         if unknown:
             die(f"not in {PACKAGES_FILE}: {', '.join(unknown)}")
         chosen &= set(only)
-    if batches:
-        chosen &= {n for n, meta in pkgs.items() if meta["batch"] in batches}
     return chosen
 
 
@@ -291,7 +287,7 @@ def select_since(pkgs: dict[str, dict], rev: str) -> set[str]:
     return selected
 
 
-def entries(names: set[str], pkgs: dict[str, dict], labels: dict[str, str]):
+def entries(names: set[str], pkgs: dict[str, dict]):
     for name in sorted(names):
         yield {
             # "name" is the registry key — the workflow needs it for artifact
@@ -301,7 +297,6 @@ def entries(names: set[str], pkgs: dict[str, dict], labels: dict[str, str]):
             "labels": {
                 "batch": str(pkgs[name]["batch"]),
                 "project": pkgs[name]["project"],
-                **labels,
             },
         }
 
@@ -310,16 +305,11 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--since", help="git revision; build everything changed since it")
     ap.add_argument("--only", nargs="*", help="build only these packages")
-    ap.add_argument("--batch", nargs="*", type=int, help="build only these batch numbers")
-    ap.add_argument(
-        "--label", action="append", default=[],
-        help="add LABEL=VALUE to every matrix entry (repeatable)",
-    )
     ap.add_argument("--list", action="store_true", help="print a table and exit")
     args = ap.parse_args()
 
     pkgs = load_packages()
-    chosen = select(pkgs, args.only, args.batch, args.since)
+    chosen = select(pkgs, args.only, args.since)
     if not chosen:
         print("matrix.py: nothing to build")
         return
@@ -329,8 +319,7 @@ def main() -> None:
             print(f"{pkgs[name]['batch']}  {pkgs[name]['project']:<15}  {name}")
         return
 
-    labels = dict(kv.split("=", 1) for kv in args.label)
-    matrix = list(entries(chosen, pkgs, labels))
+    matrix = list(entries(chosen, pkgs))
     batches = sorted({int(e["labels"]["batch"]) for e in matrix})
     print(f"build_matrix={json.dumps(matrix, sort_keys=True)}")
     print(f"batches={','.join(map(str, batches))}")
