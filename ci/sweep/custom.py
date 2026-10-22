@@ -13,7 +13,6 @@ documented intent.
 from __future__ import annotations
 
 import re
-import urllib.request
 from pathlib import Path
 
 import feeds
@@ -88,19 +87,36 @@ def custom_obsidian(spec: SpecFile, pkg_dir: Path) -> None:
     # the newest obsidianmd/obsidian-releases release that ships the desktop
     # linux tarball; the release's sha256 asset digest is pinned in %global
     # digest for the %prep checksum ('none' skips the check when upstream
-    # publishes no digest)
-    text = feeds.fetch_text(
+    # publishes no digest).
+    #
+    # The asset list is parsed as JSON, not scraped with a regex: a regex
+    # over the raw payload can pair one asset's name with the NEXT asset's
+    # digest whenever upstream publishes an asset without one — and the
+    # mismatch then only shows up as a sha256 failure in the build.
+    releases = feeds.fetch_json(
         "https://api.github.com/repos/obsidianmd/obsidian-releases/releases?per_page=30"
     )
-    spec.set_version(feeds.find_group(r'"name":"obsidian-([0-9.]+)\.tar\.gz"', text))
-    try:
-        digest = feeds.find_group(
-            r'"name":"obsidian-[0-9.]+\.tar\.gz".*?"digest":"sha256:([0-9a-f]{64})"',
-            text, dotall=True,
-        )
-    except feeds.FeedError:
+    for release in releases:
+        version = None
         digest = "none"
-    spec.set_global("digest", digest)
+        for asset in release.get("assets", []):
+            name = asset.get("name", "")
+            m = re.fullmatch(r"obsidian-([0-9.]+)\.tar\.gz", name)
+            if not m:
+                continue
+            version = m.group(1)
+            found = asset.get("digest") or ""
+            if found.startswith("sha256:"):
+                digest = found[len("sha256:"):]
+            break
+        if version is None:
+            continue
+        spec.set_version(version)
+        spec.set_global("digest", digest)
+        return
+    raise feeds.FeedError(
+        "obsidian: no release in the last 30 ships an obsidian-<ver>.tar.gz"
+    )
 
 
 def custom_opencode_desktop(spec: SpecFile, pkg_dir: Path) -> None:
@@ -149,7 +165,6 @@ def custom_zotero(spec: SpecFile, pkg_dir: Path) -> None:
     # downloads — probe newest-first with HEAD, skipping 403/404 (yanked or
     # never-published) and erroring on anything else, so a dead network or a
     # moved host never silently downgrades the package.
-    import urllib.error
     from functools import cmp_to_key
 
     from vercmp import rpmvercmp
@@ -167,19 +182,9 @@ def custom_zotero(spec: SpecFile, pkg_dir: Path) -> None:
             + version
             + "_linux-x86_64.tar.xz"
         )
-        feeds.validate_url(url)
-        req = urllib.request.Request(
-            url, method="HEAD", headers=feeds._headers_for(url)
-        )
-        try:
-            feeds._open(req)
-        except urllib.error.HTTPError as exc:
-            if exc.code in (403, 404):
-                continue
-            raise feeds.FeedError(
-                f"zotero: HTTP {exc.code} probing {url}") from exc
-        spec.set_version(version)
-        return
+        if feeds.head_probe(url):
+            spec.set_version(version)
+            return
     raise feeds.FeedError("zotero: no tag carries a published linux tarball")
 
 
@@ -189,7 +194,6 @@ def custom_emacs_pgtk(spec: SpecFile, pkg_dir: Path) -> None:
     # emacs-<version>.<90+> (pretest tarballs land on alpha.gnu.org, not
     # ftp.gnu.org). Rank the numeric tags newest-first and HEAD-probe the
     # ftp.gnu.org tarball zotero-style so a pretest tag never bumps the spec.
-    import urllib.error
     from functools import cmp_to_key
 
     from vercmp import rpmvercmp
@@ -208,19 +212,9 @@ def custom_emacs_pgtk(spec: SpecFile, pkg_dir: Path) -> None:
     )
     for version in versions:
         url = f"https://ftp.gnu.org/gnu/emacs/emacs-{version}.tar.xz"
-        feeds.validate_url(url)
-        req = urllib.request.Request(
-            url, method="HEAD", headers=feeds._headers_for(url)
-        )
-        try:
-            feeds._open(req)
-        except urllib.error.HTTPError as exc:
-            if exc.code in (403, 404):
-                continue
-            raise feeds.FeedError(
-                f"emacs-pgtk: HTTP {exc.code} probing {url}") from exc
-        spec.set_version(version)
-        return
+        if feeds.head_probe(url):
+            spec.set_version(version)
+            return
     raise feeds.FeedError("emacs-pgtk: no tag carries a published tarball")
 
 
@@ -249,14 +243,13 @@ def _proton_rpm_version(ghrepo: str, rpm_name: str, srcarch: str, spec: SpecFile
     # repo.protonvpn.com RPM URL so a tag whose RPM build has not landed yet
     # (Proton's RPM builds can lag their tags) never bumps the spec. The
     # official repo 403s the sweeper's default UA and answers the browser one.
-    import urllib.error
-
     fc = spec.get_global("pv_fc") or "44"
     rel = spec.get_global("pv_rel") or "1"
     # /tags order is not newest-first (feeds.github_tag_names warns) — sort
     # with rpmvercmp so a tag-order hiccup can never bump the spec DOWN to an
     # older still-published RPM
     from functools import cmp_to_key
+
     from vercmp import rpmvercmp
     tags = [t.removeprefix("v") for t in feeds.github_tag_names(f"ProtonVPN/{ghrepo}")]
     tags.sort(key=cmp_to_key(rpmvercmp), reverse=True)
@@ -267,18 +260,11 @@ def _proton_rpm_version(ghrepo: str, rpm_name: str, srcarch: str, spec: SpecFile
             f"https://repo.protonvpn.com/fedora-{fc}-stable/"
             f"{rpm_name}/{rpm_name}-{version}-{rel}.fc{fc}.{srcarch}.rpm"
         )
-        feeds.validate_url(url)
-        req = urllib.request.Request(url, method="HEAD",
-                                     headers={"User-Agent": "Mozilla/5.0"})
-        try:
-            feeds._open(req)
-        except urllib.error.HTTPError as exc:
-            if exc.code in (403, 404):
-                continue
-            raise feeds.FeedError(
-                f"{rpm_name}: HTTP {exc.code} probing {url}") from exc
-        spec.set_version(version)
-        return
+        # the official repo 403s the sweeper's default UA and answers the
+        # browser one
+        if feeds.head_probe(url, user_agent="Mozilla/5.0"):
+            spec.set_version(version)
+            return
     raise feeds.FeedError(f"{rpm_name}: no tag carries a published RPM yet")
 
 

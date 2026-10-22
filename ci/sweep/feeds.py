@@ -56,7 +56,9 @@ def validate_url(url: str) -> None:
     except socket.gaierror as exc:
         raise FeedError(f"cannot resolve {host!r}: {exc}") from exc
     for info in infos:
-        addr = ipaddress.ip_address(info[4][0])
+        # a scoped IPv6 literal ("fe80::1%eth0") is not a valid
+        # ip_address() argument — strip the scope before the check
+        addr = ipaddress.ip_address(info[4][0].split("%", 1)[0])
         if not addr.is_global:
             raise FeedError(
                 f"refusing fetch to non-public address {addr} ({host!r})")
@@ -64,7 +66,11 @@ def validate_url(url: str) -> None:
 
 class _AllowlistedRedirect(urllib.request.HTTPRedirectHandler):
     """Refuse redirects that leave the allowlisted host set; urllib's own
-    redirection cap (10) bounds the chain."""
+    redirection cap (10) bounds the chain.
+
+    The method is carried over to the redirect target: urllib's own handler
+    drops it (a redirected Request defaults to GET), which would turn a
+    cheap HEAD probe into a full download of the target body."""
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         host = (urllib.parse.urlparse(newurl).hostname or "").rstrip(".")
@@ -72,7 +78,10 @@ class _AllowlistedRedirect(urllib.request.HTTPRedirectHandler):
             raise urllib.error.HTTPError(
                 newurl, code,
                 f"redirect to non-allowlisted host {host!r}", headers, fp)
-        return super().redirect_request(req, fp, code, msg, headers, newurl)
+        new = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if new is not None and req.get_method() != new.get_method():
+            new.method = req.get_method()
+        return new
 
 
 _OPENER = urllib.request.build_opener(_AllowlistedRedirect())
@@ -125,6 +134,35 @@ def find_group(pattern: str, text: str, group: int = 1, dotall: bool = False) ->
     if not m:
         raise FeedError(f"no match for {pattern!r}")
     return m.group(group)
+
+
+def head_probe(url: str, user_agent: str | None = None) -> bool:
+    """Does `url` exist? A HEAD request through the allowlisted opener.
+
+    True  — the resource is there (200/2xx/3xx).
+    False — the upstream says it is not (403/404): the caller skips this
+            candidate and tries the next one.
+    FeedError — anything else (a 500, a timeout, a redirect to a host
+            outside the allowlist): the caller must NOT treat that as
+            "gone", or a broken network would silently downgrade the
+            package to an older version.
+
+    `user_agent` overrides the default one for the hosts that answer the
+    sweeper's UA with a 403 (Proton's repository does)."""
+    validate_url(url)
+    headers = _headers_for(url)
+    if user_agent:
+        headers["User-Agent"] = user_agent
+    req = urllib.request.Request(url, method="HEAD", headers=headers)
+    try:
+        with _open(req):
+            return True
+    except urllib.error.HTTPError as exc:
+        if exc.code in (403, 404):
+            return False
+        raise FeedError(f"HTTP {exc.code} probing {url}") from exc
+    except urllib.error.URLError as exc:
+        raise FeedError(f"cannot reach {url}: {exc}") from exc
 
 
 # ---- GitHub feeds ----------------------------------------------------------
