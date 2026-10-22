@@ -37,13 +37,18 @@ that particular markdown file for the task at hand. Code, the registry
 
 ## Commands
 
-There is no test suite; verification = the Copr build going green.
+There is a small unit-test suite for the CI helpers; the specs themselves
+are verified by the Copr build going green.
 
 ```bash
 # registry consistency + build plan (what CI's validate job runs)
 python3 ci/matrix.py --list
 python3 ci/matrix.py --list --since <sha>   # what a push would rebuild
 python3 ci/sweep/sweep.py --check           # every package has a feed; no dead feeds
+python3 ci/specs.py --check                # the spec conventions below, mechanically
+
+# the CI helpers' unit tests (stdlib unittest, no dependencies)
+python3 -m unittest discover -s ci/tests -t .
 
 # submit ONE package to Copr (what copr-build.yml's submit jobs do;
 # rpmbuild/spectool/cop-cli: run inside the CI image or a fedora:44 container)
@@ -87,8 +92,11 @@ mock -r /tmp/copr.cfg <srpm>
   added first — copy the previous populated pair, renumber, and chain it
   after that wave — or the manifest would emit a wave with no job to
   submit it.
-- Touching `ci/**` or `.github/builder/**` makes `ci/matrix.py` rebuild
-  _every_ package in this repo (`INFRA_PREFIXES`).
+- Touching `ci/**`, `.github/builder/**` or the build workflow itself makes
+  `ci/matrix.py` rebuild _every_ package in this repo (`INFRA_PREFIXES`).
+  A change that touches no build input at all (docs, templates) rebuilds
+  nothing — the old "no package changed means rebuild everything" rule was a
+  safety net for a repo that had no registry yet.
 - **Version bumps are automatic** (`update.yml`, weekly Monday floor +
   chained after every cascade): `ci/sweep/sweep.py` reads each package's
   `[pkg.updates]` table (`feed = "github-release" | "github-tag" |
@@ -101,13 +109,21 @@ mock -r /tmp/copr.cfg <srpm>
   main (self-healing: a failed build leaves the published version
   untouched); set the `UPDATE_MODE` repo variable to `pr` for a review
   gate.
-- **Spec conventions** (terra-style, differ from Fedora defaults):
+- **Spec conventions** (terra-style, differ from Fedora defaults). They are
+  enforced mechanically by `ci/specs.py --check` (the validate job runs it)
+  and, for what only rpm can see, by the `spec-lint` job (`rpmspec --parse`
+  every spec in the builder image):
   - full URLs in `Source*` entries — the submit job's `spectool -g`
     fetches them before `rpmbuild -bs`; keep downloads out of `%prep`.
+    A non-URL `Source*`/`Patch*` must be a file that exists in the package
+    directory.
   - explicit `Release: N%{?dist}` + a written `%changelog` — no
     rpmautospec/`%autorelease`.
   - **never mention macros textually in comments** — rpm expands macros
-    inside comments too.
+    inside comments too: a `%global`/`%define` there is a hard parse
+    error, `%autosetup`/`%configure` are hard parse errors as well, and
+    anything else silently rewrites the comment (the packaged spec then
+    carries an expanded build path). Write `%%` to mention a macro.
   - build-time repos outside Fedora/Terra go in the **Copr chroot's repo
     list** (`copr-cli edit-chroot aahsnr-work/applications/fedora-44-x86_64
     --repos …`), not the spec. Configured: Terra 44 and the
@@ -130,6 +146,9 @@ mock -r /tmp/copr.cfg <srpm>
   - `install -t DIR SRC` keeps SRC's basename — `%files` must claim the
     name as installed. Prefer explicit
     `install -Dm644 SRC %{buildroot}%{dir}/NAME`.
+  - never list a file twice: `%files` with a directory glob AND a file
+    inside it makes rpm warn "File listed twice" — own the directory with
+    `%dir` and the file separately.
 - `repo/` carries this project's consumer drop-in (`applications.repo`);
   repoclosure installs it (plus Terra and the lionheartp bootstrap,
   written inline) and checks the published repo against that view.

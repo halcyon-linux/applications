@@ -30,7 +30,9 @@ applications · fonts · texlive-packages · linux-p03.
 ```
 ci/packages.toml    the registry: build selection + sweep-feed config
 ci/matrix.py        batch/wave build plan (validate job runs it)
+ci/specs.py         the spec conventions, checked mechanically
 ci/sweep/           the version sweeper + custom feeds
+ci/tests/           unit tests for the CI helpers
 pkgs/<pkg>/         spec + local sources
 repo/               the applications.repo consumer drop-in
 templates/          starting points for new specs
