@@ -1,9 +1,9 @@
 # update — upstream version sweep, chained to the cascade (replaces
 # anda-update.yml).
 #
-# Runs ci/sweep/sweep.py (the Python port of the 48 update.rhai scripts — the
-# anda migration). The sweeper edits specs in place and writes only real
-# changes; this workflow lands them:
+# Runs ci/sweep/sweep.py (the applications registry's upstream feeds). The
+# sweeper edits specs in place and writes only real changes; this workflow
+# lands them:
 #
 #   mode=commit (default)  push `bump: <date> (<pkgs>)` straight to main —
 #                          the push makes copr-build.yml rebuild the changed
@@ -54,7 +54,10 @@ permissions:
 
 concurrency:
   group: update
-  cancel-in-progress: true
+  # queue, never cancel: a canceled run can strand a pushed bump before its
+  # copr-build dispatch, and the next no-op sweep would not resubmit it.
+  # Queued sweeps are cheap and idempotent.
+  cancel-in-progress: false
 
 jobs:
   sweep:
@@ -112,7 +115,7 @@ jobs:
           git add pkgs/
           git commit -m "bump: ${date_tag} (${pkgs})"
           # main may have moved since checkout (manual push race): rebase and
-          # retry instead of failing the daily sweep
+          # retry instead of failing the scheduled sweep
           for attempt in 1 2 3; do
             if git fetch origin main && git rebase origin/main && git push origin HEAD:main; then
               break
@@ -128,8 +131,10 @@ jobs:
           # cascade explicitly, scoped to the bumped packages (an unscoped
           # dispatch builds the whole registry on every bump wave)
           GH_TOKEN="${{ github.token }}" gh workflow run copr-build.yml --ref main -f only="${pkgs}"
+      # !cancelled(), like commit mode: the sweep step is continue-on-error,
+      # so one broken feed must not discard bumps that already succeeded
       - name: Open a bump PR (mode=pr)
-        if: env.MODE == 'pr' && success()
+        if: env.MODE == 'pr' && !cancelled()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

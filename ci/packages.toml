@@ -13,7 +13,8 @@
 # batch 0  every package — none BuildRequires another registry package, so
 #          the whole registry builds in one wave (onlyoffice's heavy source
 #          build included; batch semantics are dependency levels, not weight)
-# The optional [pkg.updates] table drives the daily sweep (update.yml):
+# The [pkg.updates] table drives the version sweep (update.yml) and is
+# required for every package — sweep.py --check enforces it:
 #   feed = "github-release"  + repo = "owner/name"   latest GitHub release tag
 #   feed = "github-tag"      + repo = "owner/name"   newest git tag
 #   feed = "custom"          + custom = "<name>"     ci/sweep/custom.py function

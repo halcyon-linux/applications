@@ -9,7 +9,7 @@
 #   * sources are fetched at SRPM-build time (Source0/1/2 by mock); the
 #     tarball's sha256 is verified in %prep against the digest upstream
 #     publishes on the GitHub release (Arch's makepkg checksum equivalent) —
-#     the expected digest is pinned in %%global digest by update.rhai, empty
+#     the expected digest is pinned in %%global digest by the sweep, empty
 #     when upstream publishes none (also resolves the old deferred blocker).
 #   * options=(!strip) -> debug_package/__os_install_post nil.
 %global             full_name obsidian
@@ -41,7 +41,7 @@ plain text Markdown files. You can add custom permanent flags for Obsidian in
 %setup -q -c -T -a 0
 
 # verify the vendored tarball against the digest upstream publishes on the
-# release (Arch makepkg checksum; update.rhai pins %%global digest, 'none'
+# release (Arch makepkg checksum; the sweep pins %%global digest, 'none'
 # when upstream publishes none).
 if [ '%{digest}' != 'none' ]; then
     actual="$(sha256sum %{_sourcedir}/obsidian-%{version}.tar.gz | cut -d' ' -f1)"

@@ -1,5 +1,5 @@
 """Upstream version feeds for the sweeper — the port of andax's gh()/gh_tag()
-/gh_commit()/get()/get_json()/find() helpers.
+/get()/get_json()/find() helpers.
 
 Only the stdlib (urllib) is used; every GitHub call carries GITHUB_TOKEN when
 the environment provides one, exactly like the rhai helpers did.
@@ -19,21 +19,17 @@ import urllib.request
 
 GITHUB_API = "https://api.github.com"
 
-# the complete set of upstream hosts any feed may talk to (the GitHub hosts
-# serve the standard feeds; the rest serve the custom feeds in custom.py).
-# A new feed host means adding it here — one reviewable line.
+# the complete set of upstream hosts any feed may talk to: api.github.com for
+# the GitHub feeds and the GitHub-backed custom feeds, plus the upstream hosts
+# the custom feeds in custom.py scrape. A new feed host means adding it here —
+# one reviewable line.
 ALLOWED_HOSTS = frozenset({
     "api.github.com",
-    "github.com",
-    "raw.githubusercontent.com",
-    "sourceforge.net",
     "aur.archlinux.org",
     "download.zotero.org",
     "ftp.gnu.org",
-    "registry.npmjs.org",
-    "opencode.ai",
-    "www.opencode.net",
     "mullvad.net",
+    "opencode.ai",
     "repo.protonvpn.com",
 })
 
@@ -102,7 +98,7 @@ def _gh_headers() -> dict[str, str]:
 
 def _headers_for(url: str) -> dict[str, str]:
     """GitHub auth only ever goes to api.github.com — the plain get()/get_json()
-    feeds hit third-party hosts (SourceForge, AUR, opencode.net) and must not
+    feeds hit third-party hosts (the AUR, vendor download sites) and must not
     leak the token to them."""
     if url.startswith(GITHUB_API):
         return _gh_headers()
@@ -137,9 +133,9 @@ def find_group(pattern: str, text: str, group: int = 1, dotall: bool = False) ->
 
 def github_release_tag(repo: str) -> str:
     """gh() port: the tag of the repo's latest release (newest non-draft,
-    non-prerelease), RAW — andax does not strip the leading `v` (verified:
-    the sdbus-c++ sweep wrote v2.3.1). Callers that want an unprefixed
-    version strip it themselves (rpm.version() does for Version lines)."""
+    non-prerelease), RAW — the source feed does not strip the leading `v`.
+    Callers that want an unprefixed version strip it themselves
+    (rpm.version() does for Version lines)."""
     data = fetch_json(f"{GITHUB_API}/repos/{repo}/releases/latest")
     return data["tag_name"]
 
@@ -172,12 +168,11 @@ def github_tag_names(repo: str) -> list[str]:
 
 def github_latest_tag(repo: str) -> str:
     """gh_tag() port: the newest git tag (releases or not), leading `v`
-    stripped. The per-name v-strip before comparing is not cosmetic:
-    Hyprland's tag set mixes `v0.56.2` with an ancient unprefixed
-    `0.1.0-beta`, and rpmvercmp ranks a leading digit over a leading letter —
-    comparing raw names picks the prehistoric tag.
-    Empty when the repo has no tags — callers treat that as 'stay on the
-    current version base'."""
+    stripped. The per-name v-strip before comparing is not cosmetic: a tag
+    set can mix `v0.56.2` with an ancient unprefixed `0.1.0-beta`, and
+    rpmvercmp ranks a leading digit over a leading letter — comparing raw
+    names picks the prehistoric tag.
+    Empty when the repo has no tags; sweep.py turns that into a feed error."""
     names = github_tag_names(repo)
     if not names:
         return ""
@@ -189,15 +184,5 @@ def github_latest_tag(repo: str) -> str:
         if not best or rpmvercmp(stripped, best) > 0:
             best = stripped
     return best
-
-
-def github_commit(repo: str, ref: str = "") -> str:
-    """gh_commit() port: the tip commit of the default branch (or `ref`).
-    Without a ref the commits endpoint returns a LIST — take its head."""
-    data = fetch_json(
-        f"{GITHUB_API}/repos/{repo}/commits/{ref}" if ref
-        else f"{GITHUB_API}/repos/{repo}/commits"
-    )
-    return (data[0] if isinstance(data, list) else data)["sha"]
 
 

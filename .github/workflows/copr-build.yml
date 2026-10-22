@@ -106,6 +106,10 @@ jobs:
         run: |
           set -eu
           python3 ci/matrix.py --list
+          # every package must carry a sweep feed, every custom feed must be
+          # referenced, and every pkgs/ directory must be registered — an
+          # unswept or untracked package is a silent update gap
+          python3 ci/sweep/sweep.py --check
           BEFORE="${{ github.event.before }}"
           if [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ] \
              && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
@@ -228,7 +232,7 @@ jobs:
           mkdir -p "_srpms/$NAME"
           spectool -g -C "_srpms/$NAME" "$spec"
           # spectool fetches only URL sources; local (non-URL) Source/Patch
-          # entries (onlyoffice's metainfo, hyprland's macros.hyprland, …)
+          # entries (onlyoffice's metainfo, obsidian's desktop file, …)
           # live in the package dir and go into the sourcedir verbatim
           cp -a "pkgs/$NAME/." "_srpms/$NAME/"
           srpm=$(rpmbuild -bs \

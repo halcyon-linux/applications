@@ -1,10 +1,9 @@
 """Pure-Python port of rpm's version comparison (lib/rpmvercmp.c), including
 the tilde (~ = pre-release, sorts below everything) and caret (^ = snapshot,
-sorts above everything) extensions the snapshot sweeper versions rely on.
+sorts above everything) extensions rpm supports.
 
-The sweeper needs rpmdev-vercmp semantics (rc 11/12 in the old rhai scripts);
-this module returns -1/0/1 instead and vercmp_rc() wraps it into rpmdev's
-exit-code convention. Pure Python so the sweep has no rpm host dependency.
+The sweeper needs rpm's ordering, so this module returns -1/0/1. Pure Python
+so the sweep has no rpm host dependency.
 """
 
 from __future__ import annotations
@@ -73,13 +72,3 @@ def rpmvercmp(a: str, b: str) -> int:
         if seg1 != seg2:
             return 1 if seg1 > seg2 else -1
     return 0
-
-
-def vercmp_rc(old: str, new: str) -> int:
-    """rpmdev-vercmp's exit code convention (what the rhai scripts shelled
-    out to): 0 = equal, 11 = first argument newer, 12 = second argument
-    newer, anything else = error (kept for the hyprland port's checks)."""
-    rc = rpmvercmp(old, new)
-    if rc == 0:
-        return 0
-    return 11 if rc > 0 else 12

@@ -30,6 +30,7 @@ There is no test suite; verification = the Copr build going green.
 # registry consistency + build plan (what CI's validate job runs)
 python3 ci/matrix.py --list
 python3 ci/matrix.py --list --since <sha>   # what a push would rebuild
+python3 ci/sweep/sweep.py --check           # every package has a feed; no dead feeds
 
 # submit ONE package to Copr (what copr-build.yml's submit jobs do;
 # rpmbuild/spectool/cop-cli: run inside the CI image or a fedora:44 container)
