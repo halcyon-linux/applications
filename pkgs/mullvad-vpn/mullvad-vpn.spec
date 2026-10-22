@@ -22,6 +22,7 @@ Source0:            https://github.com/mullvad/mullvadvpn-app/releases/download/
 
 ExclusiveArch:      x86_64
 
+BuildRequires:      cpio
 BuildRequires:      systemd-rpm-macros
 Requires:           systemd
 Requires:           dbus-libs

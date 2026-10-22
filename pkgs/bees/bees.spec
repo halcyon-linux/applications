@@ -75,8 +75,10 @@ make test
 %{_bindir}/beesd
 %{_libexecdir}/%{name}
 %{_unitdir}/beesd@.service
-%{_sysconfdir}/%{name}/
-%config %{_sysconfdir}/%{name}/beesd.conf.sample
+# own the directory and the sample config separately: listing the directory
+# AND the file inside it makes rpm report "File listed twice"
+%dir %{_sysconfdir}/%{name}
+%config(noreplace) %{_sysconfdir}/%{name}/beesd.conf.sample
 
 %changelog
 * Fri Oct 16 2026 halcyon-autoupdate <aahsnr041@proton.me> - 0.11-1

@@ -1,7 +1,7 @@
 # Written from templates/source-build.spec.tmpl.
 # Sources: use full URLs in Source* entries — the CI submit job fetches them
 # with spectool at SRPM-build time; keep downloads out of %prep (read files
-# from %{_sourcedir} or %setup -a 0).
+# from %%{_sourcedir} or %setup -a 0).
 # Use an explicit Release: and a written %changelog (no rpmautospec — this
 # repo matches terra's spec conventions).
 # Registration: add the package to ci/packages.toml (batch + [pkg.updates]

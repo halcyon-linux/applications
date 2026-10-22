@@ -68,7 +68,7 @@ share research sources.
 
 %install
 install -dm755 %{buildroot}%{bundledir}
-# upstream: cp -a app/staging/Zotero_linux-*/* %{buildroot}%{bundledir}/
+# upstream: cp -a app/staging/Zotero_linux-*/* %%{buildroot}%%{bundledir}/
 cp -a Zotero_linux-x86_64/* %{buildroot}%{bundledir}/
 
 # AUR zotero PKGBUILD: prepend exec to the launcher's zotero-bin invocation
@@ -110,7 +110,7 @@ install -Dpm644 %{buildroot}%{bundledir}/icons/symbolic.svg \
 install -Dpm644 %{SOURCE1} %{buildroot}%{_metainfodir}/%{appid}.metainfo.xml
 
 %check
-# upstream: %desktop_file_validate -f %{buildroot}%{_appsdir}/zotero.desktop
+# upstream: %%desktop_file_validate -f %%{buildroot}%%{_appsdir}/zotero.desktop
 desktop-file-validate %{buildroot}%{_appsdir}/zotero.desktop
 appstreamcli validate --no-net %{buildroot}%{_metainfodir}/%{appid}.metainfo.xml
 

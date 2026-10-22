@@ -25,6 +25,7 @@ URL:                https://github.com/ProtonVPN/python-proton-core
 BuildArch:          noarch
 #!RemoteAsset
 Source0:            https://repo.protonvpn.com/fedora-%{pv_fc}-stable/%{name}/%{name}-%{version}-%{pv_rel}.fc%{pv_fc}.noarch.rpm
+BuildRequires:      cpio
 BuildRequires:      python3-devel
 BuildRequires:      python-srpm-macros
 Requires:           python3-aiohttp

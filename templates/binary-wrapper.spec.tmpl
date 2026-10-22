@@ -22,7 +22,7 @@ BuildArch:      x86_64
 # the CI submit job fetches the Source* URLs with spectool at SRPM-build
 # time; %prep only unpacks/uses what rpmbuild already downloaded. Use
 # %setup -q -c -T for archives rpmbuild can unpack; for anything else
-# read it from %{_sourcedir}.
+# read it from %%{_sourcedir}.
 %setup -q -c -T
 cp %{_sourcedir}/<artifact-file> artifact   # + vendor digest check when published
 %install

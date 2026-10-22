@@ -22,6 +22,7 @@ Source1:        https://raw.githubusercontent.com/ferdium/ferdium-app/develop/LI
 ExclusiveArch:  x86_64
 
 # the automatic check stage validates the packaged .desktop files
+BuildRequires:  cpio
 BuildRequires:  desktop-file-utils
 
 # vendor Requires, alternates resolved to Fedora package names
