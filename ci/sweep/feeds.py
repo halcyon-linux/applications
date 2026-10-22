@@ -12,7 +12,6 @@ import json
 import os
 import re
 import socket
-import subprocess
 import urllib.error
 import urllib.parse
 import urllib.request

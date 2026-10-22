@@ -149,6 +149,13 @@ def sweep_one(name: str, updates: dict, spec_path: Path, base: Path) -> tuple[bo
         fn(spec, base)
     else:
         raise feeds.FeedError(f"unknown feed type {feed!r}")
+    new_version = spec.get_version()
+    if new_version == old_version and spec.is_changed():
+        # the feed changed something other than the Version (a pinned
+        # upstream build id, a checksum): the rebuild must still supersede
+        # the published NVR, or `dnf upgrade` skips it and the update is
+        # silently lost. A real version change already reset Release to 1.
+        spec.bump_release()
     wrote = spec.save()
     return wrote, old_version, spec.get_version()
 

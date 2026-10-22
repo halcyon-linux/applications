@@ -80,8 +80,11 @@ mock -r /tmp/copr.cfg <srpm>
   chained after every cascade): `ci/sweep/sweep.py` reads each package's
   `[pkg.updates]` table (`feed = "github-release" | "github-tag" |
   "custom"` + `repo`) and edits specs in place (Release resets only on a
-  real version change; file written only on content change). Custom feeds
-  live in `ci/sweep/custom.py`. Default mode commits bumps straight to
+  real version change; a sweep that changes anything else — a pinned
+  upstream build id, a checksum — bumps the Release instead, so the
+  rebuilt RPM never carries the NVR of the one already published; file
+  written only on content change). Custom feeds live in
+  `ci/sweep/custom.py`. Default mode commits bumps straight to
   main (self-healing: a failed build leaves the published version
   untouched); set the `UPDATE_MODE` repo variable to `pr` for a review
   gate.

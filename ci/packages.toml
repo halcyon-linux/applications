@@ -92,9 +92,11 @@ feed = "custom"
 custom = "bitwarden"
 
 # obsidian: follows the Arch Linux package (launcher with user-flags file,
-# /usr/lib/obsidian, resources icon, LicenseRef-Obsidian), with the bundled
-# Electron runtime shipped since Fedora has no system electron package. The
-# tarball sha256 is verified in the source step against the GitHub digest.
+# resources icon, LicenseRef-Obsidian), with the bundled Electron runtime
+# shipped since Fedora has no system electron package — it lands in the
+# package's private libdir and the launcher gets that path substituted at
+# build time. The tarball sha256 is verified in the source step against the
+# GitHub digest.
 [obsidian]
 batch = 0
 

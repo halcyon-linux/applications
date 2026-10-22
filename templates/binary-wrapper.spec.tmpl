@@ -9,12 +9,19 @@ URL:            https://<vendor>
 Source0:        <vendor-url-with-%{version}>
 Source1:        <pkg>.desktop
 BuildArch:      x86_64
+# a foreign binary tree needs the FULL nil set: no debug package (an empty
+# debugsource file list fails the build) and no brp hooks — Copr's shebang
+# mangler, check-rpaths and /usr/lib/.build-id links hard-fail what older
+# buildroots let pass. Keep the payload byte-identical to the vendor blob.
+%global             debug_package %{nil}
+%global _build_id_links none
+%global             __os_install_post %{nil}
 %description
 %{summary}.
 %prep
 # the CI submit job fetches the Source* URLs with spectool at SRPM-build
 # time; %prep only unpacks/uses what rpmbuild already downloaded. Use
-# %setup -q -c -T -a 0 for archives rpmbuild can unpack; for anything else
+# %setup -q -c -T for archives rpmbuild can unpack; for anything else
 # read it from %{_sourcedir}.
 %setup -q -c -T
 cp %{_sourcedir}/<artifact-file> artifact   # + vendor digest check when published

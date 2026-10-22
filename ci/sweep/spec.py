@@ -57,6 +57,28 @@ class SpecFile:
                 pass
         return val
 
+    def is_changed(self) -> bool:
+        """True when the in-memory text differs from the file on disk."""
+        return self.text != self._original
+
+    def bump_release(self) -> bool:
+        """Increment the Release number, keeping the dist suffix.
+
+        rpm's version() resets Release to 1 when the Version changes; a
+        sweep that changes anything ELSE (a pinned upstream build id, a
+        checksum) without changing the Version must still move the Release.
+        Otherwise the rebuilt RPM carries the NVR of the one already
+        published and `dnf upgrade` skips it — the update is silently lost.
+        """
+        m = re.search(r"(?m)^(Release:[ \t]*)([0-9]+)(\S*)$", self.text)
+        if not m:
+            raise SpecError(f"{self.path}: no Release: line to bump")
+        bumped = f"{m.group(1)}{int(m.group(2)) + 1}{m.group(3)}"
+        self.text = re.sub(
+            r"(?m)^Release:[ \t]*\S+$", lambda _: bumped, self.text, count=1
+        )
+        return True
+
     def set_version(self, version: str, reset_release: bool = True) -> bool:
         """rpm.version() port: strip a leading `v`, rewrite the Version value,
         reset Release to 1%{?dist} — only when the version really changes.
