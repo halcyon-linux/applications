@@ -120,6 +120,15 @@ batch = 0
 feed = "github-release"
 repo = "ferdium/ferdium-app"
 
+# openchamber: vendor rewrap of the official upstream RPM (Electron app);
+# the sweep tracks openchamber/openchamber GitHub releases.
+[openchamber]
+batch = 0
+
+[openchamber.updates]
+feed = "github-release"
+repo = "openchamber/openchamber"
+
 # antigravity-cli: Google's proprietary vendor payload; the download URL
 # embeds a per-release execution id Google exposes nowhere, so the sweep
 # reads the AUR maintainer's pins (RPC pkgver + the PKGBUILD's _build).
