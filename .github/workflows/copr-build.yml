@@ -102,7 +102,11 @@ jobs:
           fi
       - name: Python syntax
         run: python3 -m py_compile ci/*.py ci/sweep/*.py
+      - name: Unit tests
+        run: python3 -m unittest discover -s ci/tests -t .
       - name: Registry consistency + build plan
+        env:
+          BEFORE: ${{ github.event.before }}
         run: |
           set -eu
           python3 ci/matrix.py --list
@@ -110,8 +114,11 @@ jobs:
           # referenced, and every pkgs/ directory must be registered — an
           # unswept or untracked package is a silent update gap
           python3 ci/sweep/sweep.py --check
-          BEFORE="${{ github.event.before }}"
-          if [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ] \
+          # the spec conventions AGENTS.md writes down (explicit Release,
+          # written changelog, no debug packages, no macro text in comments,
+          # real Source files) are checked mechanically here
+          python3 ci/specs.py --check
+          if [ -n "${BEFORE:-}" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ] \
              && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
             python3 ci/matrix.py --list --since "$BEFORE"
           fi
@@ -127,9 +134,43 @@ jobs:
           tar -xzf /tmp/actionlint.tar.gz -C /tmp actionlint
           /tmp/actionlint -color
 
+  spec-lint:
+    name: Lint the specs (rpmspec)
+    needs: validate
+    # The authoritative spec check: rpm itself parses every spec and warns
+    # about macros expanded inside comments (a %global in a comment is a
+    # hard parse error, a %{buildroot} silently rewrites the comment into an
+    # absolute build path). ci/specs.py covers the conventions rpm does not
+    # know about; this job catches what only rpm can see — before the
+    # submit job spends build-farm time on a spec that cannot parse.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    container:
+      image: ghcr.io/halcyon-linux/applications-builder:f44
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ github.token }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Parse every spec
+        run: |
+          set -eu
+          rc=0
+          for f in pkgs/*/*.spec; do
+            # rpmspec prints the parsed spec on stdout; everything it has to
+            # say about the input is on stderr
+            out=$(rpmspec --parse "$f" 2>&1 >/dev/null) || true
+            if [ -n "$out" ]; then
+              echo "::error file=$f::$(printf '%s' "$out" | tr '\n' ' ')"
+              rc=1
+            fi
+          done
+          exit $rc
+
   manifest:
     name: Build matrix (per batch)
-    needs: validate
+    needs: [validate, spec-lint]
     # PRs stop here: validation only, no Copr builds. Push cascades are
     # gated on the CASCADE_ENABLED repo variable (kill-switch + lets a fresh
     # repo be pushed without firing a full rebuild); workflow_dispatch and
@@ -152,8 +193,12 @@ jobs:
           BEFORE: ${{ github.event.before }}
         run: |
           set -eu
-          if [ -n "${ONLY:-}" ]; then
-            echo "args=--only ${ONLY}" >> "$GITHUB_OUTPUT"
+          # the dispatch input is free text: keep it to one line and to
+          # package-name characters, so it cannot break the output file or
+          # smuggle a second flag into the matrix.py argument list
+          only="$(printf '%s' "${ONLY:-}" | tr -cs 'A-Za-z0-9._-' ' ')"
+          if [ -n "$only" ]; then
+            echo "args=--only $only" >> "$GITHUB_OUTPUT"
           elif [ "$EVENT" = push ] && [ -n "${BEFORE:-}" ] \
                && [ "$BEFORE" != "0000000000000000000000000000000000000000" ] \
                && git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
@@ -291,15 +336,23 @@ jobs:
           echo "watching builds: $ids"
           # the ids are one space-joined list
           # shellcheck disable=SC2086
-          copr-cli watch-build $ids
-          # watch-build's exit code is not a contract; re-check every id so a
-          # failed build fails this job no matter what
+          copr-cli watch-build $ids || true
+          # watch-build's exit code is not a contract (it exits non-zero on a
+          # failed build, and `set -e` would abort the step right here, before
+          # the per-id check below could report WHICH build failed) — so its
+          # status is swallowed and every id is re-checked: a failed build
+          # fails this job no matter what watch-build returned.
           rc=0
           # shellcheck disable=SC2086
           for id in $ids; do
-            status=$(copr-cli status "$id")
+            status=""
+            for attempt in 1 2 3; do
+              status=$(copr-cli status "$id" 2>/dev/null) && break
+              status=""
+              sleep 10
+            done
             if [ "$status" != succeeded ]; then
-              echo "build $id: $status"
+              echo "build $id: ${status:-<status unavailable>}"
               rc=1
             fi
           done

@@ -85,6 +85,17 @@ jobs:
         run: |
           git config user.name "halcyon-autoupdate"
           git config user.email "aahsnr041@proton.me"
+      - name: Check the landing mode
+        # An unknown UPDATE_MODE would silently match neither the commit
+        # step nor the PR step: the sweep would compute its bumps and
+        # discard them, and the run would still go green. Fail loudly
+        # instead — the bumps are recomputed on the next run.
+        run: |
+          set -eu
+          case "$MODE" in
+            commit|pr) echo "landing mode: $MODE" ;;
+            *) echo "::error::unknown UPDATE_MODE '$MODE' (expected commit or pr)"; exit 1 ;;
+          esac
       # continue-on-error: one broken upstream feed must not discard the
       # good bumps the sweep already wrote — the commit below lands whatever
       # succeeded, and the final step turns the run red for visibility
@@ -148,14 +159,19 @@ jobs:
           git add pkgs/
           git commit -m "bump: ${date_tag} (${pkgs})"
           git checkout -B "bump/${date_tag}"
-          git push -u origin "bump/${date_tag}"
+          # the branch is bot-owned and reset to the bumps of THIS run, so a
+          # same-day re-run must be able to move it: a plain push is
+          # rejected as non-fast-forward when the branch already exists
+          git push -u --force origin "bump/${date_tag}"
           gh pr create --head "bump/${date_tag}" \
             --title "chore(bump): upstream versions $(date -u +%Y-%m-%d)" \
             --body "Automated by .github/workflows/update.yml (\`ci/sweep/sweep.py\`). Review the version transitions and merge — copr-build.yml then builds the changed packages and every package in a higher batch."
       - name: Fail the run if a feed errored
         # the bumps above already landed; failing here only flags the broken
-        # feed (red run + notifications) — it never blocks the other bumps
-        if: steps.sweep.outcome == 'failure'
+        # feed (red run + notifications) — it never blocks the other bumps.
+        # A cancelled sweep counts as a failure too: nothing was swept, and
+        # a green run would hide it.
+        if: steps.sweep.outcome != 'success'
         run: |
-          echo "one or more upstream feeds failed — see the sweep log above" >&2
+          echo "one or more upstream feeds failed (or the sweep was cancelled) — see the sweep log above" >&2
           exit 1

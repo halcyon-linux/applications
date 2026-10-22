@@ -12,7 +12,13 @@ FROM registry.fedoraproject.org/fedora-minimal:44
 # /etc/yum.repos.d/fedora*.repo keep providing Fedora 44 + updates.
 
 RUN dnf up -y && \
-    dnf swap -y systemd-standalone-sysusers systemd && \
+    # the standalone sysusers helper conflicts with mock's chroot handling;
+    # the swap removes it so the systemd package's own copy is used. Fedora
+    # may drop the standalone package entirely — then there is nothing to
+    # swap and the image build must not fail over it
+    if rpm -q systemd-standalone-sysusers >/dev/null 2>&1; then \
+        dnf swap -y systemd-standalone-sysusers systemd; \
+    fi && \
     dnf in -y \
         copr-cli python3 \
         rpmdevtools rpm-build \
