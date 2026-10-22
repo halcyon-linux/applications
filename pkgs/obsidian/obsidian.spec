@@ -17,14 +17,14 @@
 #     when upstream publishes none (also resolves the old deferred blocker).
 #   * options=(!strip) -> debug_package/__os_install_post nil.
 %global             full_name obsidian
-%global             digest e70b7cd63787e7f798a84fec453f5c446b91877bd3f612e8fb98e9b76cc81120
+%global             digest 1bc6547c889d7d02c3f2c5b55884cba14980bfac4ada32c0bdc6ec6db542aaf8
 %global             debug_package %{nil}
 %global _build_id_links none
 %global             __os_install_post %{nil}
 
 Name:               obsidian
-Version:            1.14.4
-Release:            2%{?dist}
+Version:            1.14.5
+Release:            1%{?dist}
 Summary:            A powerful knowledge base that works on top of a local folder of plain text Markdown files
 License:            LicenseRef-Obsidian
 URL:                https://obsidian.md
