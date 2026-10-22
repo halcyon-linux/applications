@@ -81,9 +81,12 @@ install -dm755 %{buildroot}%{_libdir}/obsidian
 %__cp -a . %{buildroot}%{_libdir}/obsidian/
 
 # the launcher execs the bundled runtime: that path is the package's private
-# libdir, which is NOT the Arch one on Fedora — substitute it here
+# libdir, which is NOT the Arch one on Fedora — substitute it here.
+# Use rpm --eval to get the correct libdir at build time (avoids macro
+# expansion timing issues in some build environments).
 install -dm755 %{buildroot}%{_bindir}
-sed -e 's|@OBSIDIAN_LIBDIR@|%{_libdir}/obsidian|g' %{SOURCE1} \
+LIBDIR=$(rpm --eval '%{_libdir}')
+sed -e "s|@OBSIDIAN_LIBDIR@|$LIBDIR/obsidian|g" %{SOURCE1} \
     > %{buildroot}%{_bindir}/obsidian
 chmod 755 %{buildroot}%{_bindir}/obsidian
 
@@ -105,6 +108,10 @@ chmod 755 %{buildroot}%{_bindir}/obsidian
 %{_licensedir}/obsidian/LICENSE-Obsidian
 
 %changelog
+* Fri Oct 23 2026 halcyon-autobuild - 1.14.4-3
+- fix launcher libdir substitution: use rpm --eval at build time to get the
+  correct %{_libdir} (avoids macro expansion issues in Copr mock chroots
+  where the macro could expand to /usr/lib instead of /usr/lib64)
 * Thu Oct 22 2026 halcyon-autoupdate <aahsnr041@proton.me> - 1.14.4-2
 - fix the launcher: it execed the Arch path (/usr/lib/obsidian/obsidian),
   which does not exist on Fedora (the 64-bit libdir is /usr/lib64); the
