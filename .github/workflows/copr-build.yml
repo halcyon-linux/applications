@@ -125,14 +125,29 @@ jobs:
       - name: Lint the workflows (actionlint + shellcheck)
         run: |
           set -euo pipefail
-          # pinned release + checksum: no curl-to-bash, no floating tags
+          # pinned releases + checksums: no curl-to-bash, no floating tags.
+          # The linter pinned below is the engine behind actionlint's findings
+          # on run: scripts, the runner's preinstalled copy floats, and a
+          # runner image update must not be able to quietly change what this
+          # job reports.
+          mkdir -p /tmp/lint/bin
           version=1.7.12
           checksum=8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
           curl -fsSL -o /tmp/actionlint.tar.gz \
             "https://github.com/rhysd/actionlint/releases/download/v${version}/actionlint_${version}_linux_amd64.tar.gz"
           echo "${checksum}  /tmp/actionlint.tar.gz" | sha256sum -c -
-          tar -xzf /tmp/actionlint.tar.gz -C /tmp actionlint
-          /tmp/actionlint -color
+          tar -xzf /tmp/actionlint.tar.gz -C /tmp/lint/bin actionlint
+          sc_version=0.10.0
+          # upstream publishes no checksum file for the shellcheck tarball;
+          # the digest is therefore pinned from the v0.10.0 release asset,
+          # re-fetchable and tamper-evident from here on
+          sc_checksum=6c881ab0698e4e6ea235245f22832860544f17ba386442fe7e9d629f8cbedf87
+          curl -fsSL -o /tmp/shellcheck.tar.xz \
+            "https://github.com/koalaman/shellcheck/releases/download/v${sc_version}/shellcheck-v${sc_version}.linux.x86_64.tar.xz"
+          echo "${sc_checksum}  /tmp/shellcheck.tar.xz" | sha256sum -c -
+          tar -xJf /tmp/shellcheck.tar.xz -C /tmp
+          mv "/tmp/shellcheck-v${sc_version}/shellcheck" /tmp/lint/bin/shellcheck
+          PATH="/tmp/lint/bin:$PATH" /tmp/lint/bin/actionlint -color
 
   spec-lint:
     name: Lint the specs (rpmspec)
@@ -349,7 +364,9 @@ jobs:
             for attempt in 1 2 3; do
               status=$(copr-cli status "$id" 2>/dev/null) && break
               status=""
-              sleep 10
+              if [ "$attempt" -lt 3 ]; then
+                sleep 10
+              fi
             done
             if [ "$status" != succeeded ]; then
               echo "build $id: ${status:-<status unavailable>}"
