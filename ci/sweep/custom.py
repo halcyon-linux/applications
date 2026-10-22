@@ -222,11 +222,12 @@ def custom_private_internet_access(spec: SpecFile, pkg_dir: Path) -> None:
     # PIA publishes no version feed at all: no GitHub release assets and a 403
     # on the installers directory listing — the AUR piavpn-bin maintainer does
     # the discovery work, so mirror their pins: pkgver for the version, the
-    # PKGBUILD's build_number for the pia_build global the Source URL
-    # interpolates.
+    # PKGBUILD's _pkgver for the URL version, and build_number for the
+    # pia_build global the Source URL interpolates.
     pkgtxt = feeds.fetch_text(
         "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=piavpn-bin")
     spec.set_version(feeds.find_group(r"(?m)^pkgver=(\S+)", pkgtxt))
+    spec.set_global("pia_url_version", feeds.find_group(r"(?m)^_pkgver=(\S+)", pkgtxt))
     spec.set_global("pia_build", feeds.find_group(r"(?m)^build_number=(\S+)", pkgtxt))
 
 
