@@ -19,6 +19,7 @@
 # The pia iproute2 routing table is registered by the daemon itself at
 # runtime (upstream's uninstaller merely cleans it up).
 %global             pia_build 08539
+%global             pia_url_version 3.8
 %global             debug_package %{nil}
 %global _build_id_links none
 %global             __os_install_post %{nil}
@@ -39,7 +40,7 @@ Summary:            Private Internet Access VPN client (official installer rewra
 License:            LicenseRef-PIA
 URL:                https://www.privateinternetaccess.com
 #!RemoteAsset
-Source0:            https://installers.privateinternetaccess.com/download/pia-linux-%{version}-%{pia_build}.run
+Source0:            https://installers.privateinternetaccess.com/download/pia-linux-%{pia_url_version}-%{pia_build}.run
 # upstream's unit with the dead syslog.target dropped from After= (AUR)
 Source1:            piavpn.service
 # NetworkManager must not manage the app's wgpia* WireGuard devices (AUR)
@@ -65,7 +66,7 @@ self-contained installer. Ships the Qt GUI, the root daemon
 # env -i keeps RPM's build environment out of the shell the archive's
 # bootstrap sources (the AUR's makepkg trick).
 mkdir -p extract
-env -i /bin/sh %{_sourcedir}/pia-linux-%{version}-%{pia_build}.run \
+env -i /bin/sh %{_sourcedir}/pia-linux-%{pia_url_version}-%{pia_build}.run \
     --noexec --target "$PWD/extract"
 test -d extract/piafiles
 
