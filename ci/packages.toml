@@ -111,6 +111,15 @@ batch = 0
 feed = "custom"
 custom = "opencode_desktop"
 
+# chatgpt: vendor rewrap of OpenAI's official RPM (Electron app); the sweep
+# mirrors the AUR chatgpt-desktop pkgver and HEAD-probes the x86_64 RPM URL.
+[chatgpt]
+batch = 0
+
+[chatgpt.updates]
+feed = "custom"
+custom = "chatgpt"
+
 # ferdium: vendor RPM rewrap on the ticktick pattern; tags and releases
 # are 1:1 on ferdium-app.
 [ferdium]

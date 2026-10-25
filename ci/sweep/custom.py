@@ -289,3 +289,25 @@ def custom_proton_vpn_daemon(spec: SpecFile, pkg_dir: Path) -> None:
 
 def custom_proton_vpn_gtk_app(spec: SpecFile, pkg_dir: Path) -> None:
     _proton_rpm_version("proton-vpn-gtk-app", "proton-vpn-gtk-app", "noarch", spec)
+
+
+def custom_chatgpt(spec: SpecFile, pkg_dir: Path) -> None:
+    # OpenAI publishes ChatGPT desktop RPMs at persistent.oaistatic.com but
+    # provides no version feed. The AUR package chatgpt-desktop tracks the
+    # version reliably; mirror its pkgver. The RPM URL follows the pattern
+    # chatgpt-<version>-1.x86_64.rpm under the x86_64 pool. HEAD-probe the
+    # constructed URL so a stale AUR version never bumps the spec to a
+    # non-existent RPM. No public sha256 is published for the RPM; skip the
+    # %%prep checksum by pinning 'none' in %%global digest.
+    aur_version = _aur_pkgver("chatgpt-desktop")
+    # AUR version is pkgver-pkgrel (e.g. 26.1021.22027-1); keep pkgver only.
+    version = aur_version.rsplit("-", 1)[0]
+    url = (
+        f"https://persistent.oaistatic.com/codex-app-prod/linux/rpm/x86_64/"
+        f"chatgpt-{version}-1.x86_64.rpm"
+    )
+    if feeds.head_probe(url, user_agent="Mozilla/5.0"):
+        spec.set_version(version)
+        spec.set_global("digest", "none")
+        return
+    raise feeds.FeedError(f"chatgpt: RPM not found at {url}")

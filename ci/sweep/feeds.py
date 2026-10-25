@@ -29,6 +29,7 @@ ALLOWED_HOSTS = frozenset({
     "ftp.gnu.org",
     "mullvad.net",
     "opencode.ai",
+    "persistent.oaistatic.com",
     "repo.protonvpn.com",
 })
 
