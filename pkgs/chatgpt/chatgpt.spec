@@ -140,7 +140,8 @@ cp usr/lib/chatgpt/LICENSE LICENSE
 
 %install
 cp -a usr %{buildroot}/
-cp -a etc %{buildroot}/
+# upstream RPM may have etc/ (systemd units, etc.); copy if present
+[ -d etc ] && cp -a etc %{buildroot}/ || :
 
 # Install the curated AppStream metainfo (overwrites upstream's if present)
 install -Dm0644 %{SOURCE1} %{buildroot}%{_metainfodir}/com.openai.chatgpt.metainfo.xml
@@ -158,14 +159,7 @@ appstreamcli validate --no-net %{buildroot}%{_metainfodir}/com.openai.chatgpt.me
 /usr/lib/chatgpt/
 /usr/share/applications/chatgpt.desktop
 /usr/share/metainfo/com.openai.chatgpt.metainfo.xml
-/usr/share/pixmaps/chatgpt.png
-/usr/share/doc/chatgpt/
-%dir /etc/apparmor.d/
-/etc/apparmor.d/chatgpt
-%dir /etc/pki/rpm-gpg/
-/etc/pki/rpm-gpg/RPM-GPG-KEY-chatgpt
-%dir /etc/yum.repos.d/
-/etc/yum.repos.d/chatgpt.repo
+/usr/share/icons/hicolor/*/apps/chatgpt.png
 
 %changelog
 * Sun Oct 25 2026 halcyon-autoupdate <aahsnr041@proton.me> - 26.1021.22027-1
