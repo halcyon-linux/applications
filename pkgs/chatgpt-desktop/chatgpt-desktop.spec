@@ -43,9 +43,18 @@
 # The bundled Electron/Chromium libs under /usr/lib/chatgpt carry SONAMEs,
 # so the dependency generator would advertise them as system providers. They
 # are private to the bundle, so suppress Provides from that directory and the
-# Requires on the bundled libs nothing in Fedora provides.
+# Requires on the bundled libs nothing in Fedora provides. The node-hid
+# prebuilds inside the bundle also carry Android-bionic, musl and ARM ELF
+# objects whose bare sonames (libc.so, libdl.so, libm.so, liblog.so),
+# namespaces (libc.so(LIBC), CXXABI_ARM_*, GCC_3.5) and companions
+# (libc++_shared.so, libc.musl-*, the bundled libvips-cpp.so.8.18.7) are
+# unresolvable — and libpthread.so.0(GLIBC_2.17) is a relic of upstream's
+# older build toolchain: glibc 2.34+ serves the pthread symbols from
+# libc.so.6, which these binaries also require and which resolves. The
+# (\(|$) anchors keep the Fedora glibc forms (libc.so.6, libdl.so.2,
+# libm.so.6) out of the match.
 %global __provides_exclude_from ^/usr/lib/chatgpt/
-%global __requires_exclude ^libffmpeg\.so|^libvulkan\.so\.1|^libEGL\.so|^libGLESv2\.so|^libvk_swiftshader\.so|^libqt5_shim\.so|^libqt6_shim\.so
+%global __requires_exclude ^libffmpeg\.so|^libvulkan\.so\.1|^libEGL\.so|^libGLESv2\.so|^libvk_swiftshader\.so|^libqt5_shim\.so|^libqt6_shim\.so|^libc\.so(\(|$)|^libc\.musl|^libc\+\+_shared\.so|^libdl\.so(\(|$)|^libm\.so(\(|$)|^liblog\.so|^libpthread\.so\.0\(GLIBC_2\.17\)|^libgcc_s\.so\.1\(GCC_3\.5\)|^libstdc\+\+\.so\.6\(CXXABI_ARM_|^libvips-cpp\.so
 
 # Pinned by the sweep from the upstream repodata; 'none' skips the check.
 %global digest d5069043701a12760cce0447f7688859e9988dfbb04daaa9be0be0b762ff895f
@@ -56,7 +65,7 @@
 
 Name:           chatgpt-desktop
 Version:        26.1021.22027
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        ChatGPT by OpenAI — official Linux desktop app
 License:        LicenseRef-Proprietary
 URL:            https://chatgpt.com/download
@@ -174,6 +183,12 @@ appstreamcli validate --no-net %{buildroot}%{_metainfodir}/com.openai.chatgpt.me
 %{_datadir}/pixmaps/chatgpt.png
 
 %changelog
+* Mon Oct 26 2026 halcyon-autoupdate <aahsnr041@proton.me> - 26.1021.22027-3
+- Exclude the bundle-private sonames the dependency generator picks up from
+  the node-hid prebuilds (bionic/musl/ARM forms, libc++_shared.so, the
+  bundled libvips-cpp) and the libpthread.so.0(GLIBC_2.17) build-toolchain
+  relic — repoclosure flagged 18 unresolved deps on -2
+
 * Mon Oct 26 2026 halcyon-autoupdate <aahsnr041@proton.me> - 26.1021.22027-2
 - Rewrap the official upstream RPM instead of the Debian package; the
   curated AppStream metainfo replaces upstream's minimal one and the
