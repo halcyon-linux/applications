@@ -21,3 +21,4 @@ _buildinfo-*.xml
 # ZCode session artifacts
 .zcode/
 .zcodeignore
+tmp/

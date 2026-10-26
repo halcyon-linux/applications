@@ -120,6 +120,43 @@ batch = 0
 feed = "custom"
 custom = "chatgpt"
 
+# claude-desktop: vendor rewrap of Anthropic's official .deb; the apt
+# Packages index supplies both the version and the sha256.
+[claude-desktop]
+batch = 0
+
+[claude-desktop.updates]
+feed = "custom"
+custom = "claude-desktop"
+
+# claude-desktop-extra: rewrap of the community build's self-contained
+# x86_64 RPM; the GitHub release tag carries the base version and the
+# extra release number (v3.6556.2-7).
+[claude-desktop-extra]
+batch = 0
+
+[claude-desktop-extra.updates]
+feed = "custom"
+custom = "claude-desktop-extra"
+
+# claude-science: Anthropic's single-file linux-x64 release; the download
+# endpoint publishes no sha256, so the feed pins the header's MD5.
+[claude-science]
+batch = 0
+
+[claude-science.updates]
+feed = "custom"
+custom = "claude-science"
+
+# chatgpt-desktop: vendor rewrap of OpenAI's official .deb, the AUR
+# chatgpt-desktop packaging. It conflicts with the RPM-based chatgpt.
+[chatgpt-desktop]
+batch = 0
+
+[chatgpt-desktop.updates]
+feed = "custom"
+custom = "chatgpt-desktop"
+
 # ferdium: vendor RPM rewrap on the ticktick pattern; tags and releases
 # are 1:1 on ferdium-app.
 [ferdium]

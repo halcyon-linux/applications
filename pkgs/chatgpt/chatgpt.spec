@@ -58,7 +58,7 @@
 
 Name:           chatgpt
 Version:        26.1021.22027
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        ChatGPT by OpenAI — AI assistant with Codex integration
 License:        Proprietary
 URL:            https://chatgpt.com/download
@@ -107,6 +107,9 @@ Requires:       libXcomposite
 Requires:       libXdamage
 Requires:       libXcursor
 Requires:       libdrm
+
+# The Debian rewrap ships the same application files.
+Conflicts:      chatgpt-desktop
 
 %description
 ChatGPT is an AI assistant from OpenAI that combines ChatGPT, ChatGPT Work,
@@ -162,5 +165,8 @@ appstreamcli validate --no-net %{buildroot}%{_metainfodir}/com.openai.chatgpt.me
 /usr/share/icons/hicolor/*/apps/chatgpt.png
 
 %changelog
+* Mon Oct 26 2026 halcyon-autoupdate <aahsnr041@proton.me> - 26.1021.22027-2
+- Conflict with chatgpt-desktop (the Debian rewrap installs the same files)
+
 * Sun Oct 25 2026 halcyon-autoupdate <aahsnr041@proton.me> - 26.1021.22027-1
 - Initial packaging of OpenAI ChatGPT desktop app from upstream RPM

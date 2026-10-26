@@ -26,6 +26,7 @@ ALLOWED_HOSTS = frozenset({
     "api.github.com",
     "aur.archlinux.org",
     "download.zotero.org",
+    "downloads.claude.ai",
     "ftp.gnu.org",
     "mullvad.net",
     "opencode.ai",
@@ -162,6 +163,22 @@ def head_probe(url: str, user_agent: str | None = None) -> bool:
         if exc.code in (403, 404):
             return False
         raise FeedError(f"HTTP {exc.code} probing {url}") from exc
+    except urllib.error.URLError as exc:
+        raise FeedError(f"cannot reach {url}: {exc}") from exc
+
+
+def head_headers(url: str):
+    """HEAD the URL through the allowlisted opener and return its headers.
+
+    Unlike head_probe(), a non-2xx is a FeedError: the caller needs the
+    headers of the resource it asked for, not a yes/no."""
+    validate_url(url)
+    req = urllib.request.Request(url, method="HEAD", headers=_headers_for(url))
+    try:
+        with _open(req) as resp:
+            return resp.headers
+    except urllib.error.HTTPError as exc:
+        raise FeedError(f"HTTP {exc.code} fetching headers from {url}") from exc
     except urllib.error.URLError as exc:
         raise FeedError(f"cannot reach {url}: {exc}") from exc
 

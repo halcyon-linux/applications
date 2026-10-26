@@ -291,6 +291,148 @@ def custom_proton_vpn_gtk_app(spec: SpecFile, pkg_dir: Path) -> None:
     _proton_rpm_version("proton-vpn-gtk-app", "proton-vpn-gtk-app", "noarch", spec)
 
 
+def _apt_stanzas(text: str):
+    """Yield the field dicts of a Debian Packages index."""
+    stanza: dict[str, str] = {}
+    for line in text.splitlines():
+        if not line.strip():
+            if stanza:
+                yield stanza
+                stanza = {}
+            continue
+        if line[0] in " \t":
+            continue          # continuation of the Description field
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        stanza[key.strip()] = value.strip()
+    if stanza:
+        yield stanza
+
+
+def _apt_index_update(spec: SpecFile, index_url: str, package: str, arch: str,
+                      filename_for) -> None:
+    """Pin the newest version and its sha256 from a Debian Packages index."""
+    from functools import cmp_to_key
+
+    from vercmp import rpmvercmp
+
+    candidates = []
+    for fields in _apt_stanzas(feeds.fetch_text(index_url)):
+        if fields.get("Package") != package or fields.get("Architecture") != arch:
+            continue
+        version = fields.get("Version", "")
+        sha256 = fields.get("SHA256", "")
+        filename = fields.get("Filename", "")
+        if version and sha256 and filename:
+            candidates.append((version, sha256, filename))
+    if not candidates:
+        raise feeds.FeedError(
+            f"{package}: no {arch} stanza with Version/SHA256/Filename in {index_url}")
+    version, sha256, filename = max(
+        candidates, key=cmp_to_key(lambda a, b: rpmvercmp(a[0], b[0])))
+    expected = filename_for(version)
+    if filename != expected:
+        raise feeds.FeedError(
+            f"{package}: index filename {filename!r} does not match {expected!r}")
+    if not re.fullmatch(r"[0-9a-f]{64}", sha256):
+        raise feeds.FeedError(f"{package}: bad SHA256 {sha256!r} for {version}")
+    spec.set_version(version)
+    spec.set_global("digest", sha256)
+
+
+def custom_claude_desktop(spec: SpecFile, pkg_dir: Path) -> None:
+    # Anthropic's apt repo is the first-party source of both the version and
+    # the .deb digest; the spec constructs the pool URL from the version.
+    _apt_index_update(
+        spec,
+        "https://downloads.claude.ai/claude-desktop/apt/stable/"
+        "dists/stable/main/binary-amd64/Packages",
+        "claude-desktop",
+        "amd64",
+        lambda version: (
+            f"pool/main/c/claude-desktop/claude-desktop_{version}_amd64.deb"),
+    )
+
+
+def custom_chatgpt_desktop(spec: SpecFile, pkg_dir: Path) -> None:
+    # OpenAI publishes the .deb and its SHA256 in the same apt index; the AUR
+    # chatgpt-desktop package mirrors that version but carries no digest.
+    _apt_index_update(
+        spec,
+        "https://persistent.oaistatic.com/codex-app-prod/linux/deb/"
+        "dists/stable/main/binary-amd64/Packages",
+        "chatgpt",
+        "amd64",
+        lambda version: f"pool/main/c/chatgpt/chatgpt_{version}_amd64.deb",
+    )
+
+
+def custom_claude_desktop_extra(spec: SpecFile, pkg_dir: Path) -> None:
+    # Upstream re-releases the same base version with a new release number
+    # (v3.6556.2-7); the tag and the x86_64 RPM asset carry both. The asset's
+    # GitHub digest is pinned for the prep check.
+    releases = feeds.fetch_json(
+        "https://api.github.com/repos/patrickjaja/claude-desktop-extra/"
+        "releases?per_page=30")
+    for release in releases:
+        if release.get("draft") or release.get("prerelease"):
+            continue
+        m = re.fullmatch(r"v([0-9][0-9.]*)-([1-9][0-9]*)",
+                         release.get("tag_name", ""))
+        if not m:
+            continue
+        version, rel = m.groups()
+        asset_name = f"claude-desktop-extra-{version}-{rel}.x86_64.rpm"
+        for asset in release.get("assets", []):
+            if asset.get("name") != asset_name:
+                continue
+            digest = asset.get("digest") or ""
+            if not digest.startswith("sha256:"):
+                raise feeds.FeedError(
+                    f"claude-desktop-extra: {asset_name} has no sha256 digest")
+            spec.set_version(version)
+            spec.set_global("extra_rel", rel)
+            spec.set_global("digest", digest[len("sha256:"):])
+            return
+    raise feeds.FeedError(
+        "claude-desktop-extra: no release in the last 30 ships "
+        "claude-desktop-extra-<version>-<rel>.x86_64.rpm")
+
+
+def custom_claude_science(spec: SpecFile, pkg_dir: Path) -> None:
+    # Anthropic serves the latest build from a stable URL and publishes no
+    # sha256. The version comes from the Content-Disposition filename and the
+    # digest from x-goog-hash's MD5; then the versioned URL the spec pins is
+    # probed, so a latest-only build never writes an unfetchable Source0.
+    import base64
+
+    latest = "https://downloads.claude.ai/claude-science/latest/linux-x64"
+    headers = feeds.head_headers(latest)
+    disposition = headers.get("Content-Disposition", "")
+    m = re.search(r'filename="claude-science-([0-9][0-9.]*)-linux-x64"', disposition)
+    if not m:
+        raise feeds.FeedError(
+            f"claude-science: no version in Content-Disposition {disposition!r}")
+    version = m.group(1)
+
+    md5 = ""
+    for value in headers.get_all("x-goog-hash") or []:
+        for part in value.split(","):
+            part = part.strip()
+            if part.startswith("md5="):
+                md5 = base64.b64decode(part[len("md5="):]).hex()
+    if not re.fullmatch(r"[0-9a-f]{32}", md5):
+        raise feeds.FeedError("claude-science: download endpoint has no MD5 header")
+
+    versioned = f"https://downloads.claude.ai/claude-science/{version}/linux-x64"
+    if not feeds.head_probe(versioned):
+        raise feeds.FeedError(
+            f"claude-science: versioned URL not published: {versioned}")
+    spec.set_version(version)
+    spec.set_global("md5", md5)
+
+
 def custom_chatgpt(spec: SpecFile, pkg_dir: Path) -> None:
     # OpenAI publishes ChatGPT desktop RPMs at persistent.oaistatic.com but
     # provides no version feed. The AUR package chatgpt-desktop tracks the
