@@ -1,22 +1,26 @@
 # Vendor RPM rewrap (openchamber/openchamber releases).
 # The desktop client ships its own Electron runtime under /opt/OpenChamber.
 # The vendor payload carries build-id links (dropped) and its self-updater
-# config (removed so dnf and the in-app updater do not fight).
+# config (removed so dnf and the in-app updater do not fight). Upstream's
+# 2.5.2 RPM stopped shipping an AppStream metainfo, so this package carries
+# its own (Source2).
 # Sources are fetched by mock at SRPM-build time; nothing is downloaded in %prep.
 %define debug_package %{nil}
 %global _build_id_links none
 
 Name:           openchamber
 Version:        2.5.2
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Agentic Development Environment based on OpenCode AI agent
 License:        MIT
 URL:            https://openchamber.dev/
 Source0:        https://github.com/openchamber/openchamber/releases/download/v%{version}/OpenChamber-%{version}-linux-x86_64.rpm
 Source1:        https://raw.githubusercontent.com/openchamber/openchamber/v%{version}/LICENSE
+Source2:        openchamber.metainfo.xml
 
 ExclusiveArch:  x86_64
 
+BuildRequires:  appstream
 BuildRequires:  cpio
 BuildRequires:  desktop-file-utils
 
@@ -50,6 +54,7 @@ rm -rf %{buildroot}/usr/lib/.build-id
 # the in-app updater would fight dnf
 rm -f %{buildroot}/opt/OpenChamber/resources/app-update.yml
 install -Dpm0644 %{SOURCE1} %{buildroot}%{_licensedir}/%{name}/LICENSE
+install -Dpm0644 %{SOURCE2} %{buildroot}%{_metainfodir}/openchamber.metainfo.xml
 # The vendor payload carries node-native modules with upstream's own
 # build-machine RPATHs — sherpa-onnx.node ships an absolute runpath into
 # the upstream CI workspace plus an empty entry. check-rpaths hard-fails
@@ -58,15 +63,21 @@ export QA_RPATHS=$(( 0x0002 | 0x0010 ))
 
 %check
 desktop-file-validate %{buildroot}%{_datadir}/applications/*.desktop
+appstreamcli validate --no-net %{buildroot}%{_metainfodir}/openchamber.metainfo.xml
 
 %files
 /opt/OpenChamber/
 %{_datadir}/applications/*.desktop
 %{_datadir}/icons/hicolor/*/apps/*.png
-%{_datadir}/metainfo/*.metainfo.xml
+%{_metainfodir}/openchamber.metainfo.xml
 %license %{_licensedir}/%{name}/LICENSE
 
 %changelog
+* Mon Oct 26 2026 halcyon-autoupdate <aahsnr041@proton.me> - 2.5.2-3
+- Ship our own AppStream metainfo: upstream's 2.5.2 RPM dropped the file
+  the glob claimed, failing %files after the RPATH fix had cleared the brp
+  stage
+
 * Mon Oct 26 2026 halcyon-autoupdate <aahsnr041@proton.me> - 2.5.2-2
 - Allow the vendor payload's upstream-CI RPATH classes through check-rpaths
   (QA_RPATHS 0x0002|0x0010): sherpa-onnx.node ships both, and the hook
