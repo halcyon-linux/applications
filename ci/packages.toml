@@ -1,5 +1,9 @@
 # ci/packages.toml — the applications build registry + sweep-feed config.
 #
+# 2026-10-27: comment-only resubmit marker — a push touching ci/** rebuilds
+# the whole registry (ci/matrix.py INFRA_PREFIXES), the no-admin way to
+# resubmit every Copr build without workflow_dispatch rights.
+#
 # Consumed by ci/matrix.py (build selection) and ci/sweep/sweep.py (version
 # sweep). One table per package; **a package without an entry is not built**.
 # The specs themselves live in pkgs/<pkg>/<pkg>.spec.
