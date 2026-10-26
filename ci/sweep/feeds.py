@@ -125,6 +125,12 @@ def fetch_text(url: str) -> str:
         return resp.read().decode()
 
 
+def fetch_bytes(url: str) -> bytes:
+    """fetch_text() for payloads that are not text (a gzipped repodata)."""
+    with _open(_get(url)) as resp:
+        return resp.read()
+
+
 def fetch_json(url: str):
     return json.loads(fetch_text(url))
 

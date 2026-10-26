@@ -1,16 +1,18 @@
-# Vendor rewrap of OpenAI's official ChatGPT Debian package (x86_64 only).
-# The .deb is fetched at SRPM-build time (Source0) and unpacked in %%prep with
-# ar; no build step. The version and the .deb sha256 come from OpenAI's apt
-# Packages index (ci/sweep/custom.py:custom_chatgpt_desktop).
+# Vendor rewrap of OpenAI's official ChatGPT desktop RPM (x86_64 only).
+# The upstream RPM is fetched at SRPM-build time (Source0) and unpacked in
+# %%prep with rpm2cpio; no build step. The version, the upstream release
+# number and the RPM sha256 come from OpenAI's own yum repodata
+# (ci/sweep/custom.py:custom_chatgpt_desktop).
 #
-# This is the AUR chatgpt-desktop packaging: the upstream minimal launcher is
-# replaced with the flags-file-aware one, the AppStream pkgname is retagged,
-# and the Debian-only apt/AppArmor machinery is dropped. It ships the same
-# application files as the chatgpt RPM rewrap, so the two packages conflict.
+# The packaging identity is the AUR chatgpt-desktop one: the upstream
+# minimal launcher is replaced with the flags-file-aware one and the
+# AppStream pkgname is retagged. The upstream RPM's /usr/bin/chatgpt is a
+# symlink to /usr/lib/chatgpt/codex-launcher, so overwriting the launcher
+# covers both entry points.
 #
 # Prebuilt foreign binary: no build-id or debuginfo can be produced, so the
 # debug package is disabled and the brp hooks are emptied to keep the payload
-# byte-identical.
+# byte-identical to the upstream blob.
 %global debug_package %{nil}
 %global _build_id_links none
 %global __os_install_post %{nil}
@@ -45,35 +47,39 @@
 %global __provides_exclude_from ^/usr/lib/chatgpt/
 %global __requires_exclude ^libffmpeg\.so|^libvulkan\.so\.1|^libEGL\.so|^libGLESv2\.so|^libvk_swiftshader\.so|^libqt5_shim\.so|^libqt6_shim\.so
 
-# Pinned by the sweep from the apt Packages index; 'none' skips the check.
-%global digest eb0831c734f154f93f8ebcf0e17d118da0dea7dc1737dc61a1e71444375bf190
+# Pinned by the sweep from the upstream repodata; 'none' skips the check.
+%global digest d5069043701a12760cce0447f7688859e9988dfbb04daaa9be0be0b762ff895f
+
+# the upstream RPM's own release number, kept in sync by the sweep (it is
+# part of the pool filename, not of our package NVR)
+%global upstream_rel 1
 
 Name:           chatgpt-desktop
 Version:        26.1021.22027
-Release:        1%{?dist}
-Summary:        ChatGPT by OpenAI — official Linux desktop app, Debian rewrap
+Release:        2%{?dist}
+Summary:        ChatGPT by OpenAI — official Linux desktop app
 License:        LicenseRef-Proprietary
 URL:            https://chatgpt.com/download
 #!RemoteAsset
-Source0:        https://persistent.oaistatic.com/codex-app-prod/linux/deb/pool/main/c/chatgpt/chatgpt_%{version}_amd64.deb
+Source0:        https://persistent.oaistatic.com/codex-app-prod/linux/rpm/x86_64/chatgpt-%{version}-%{upstream_rel}.x86_64.rpm
 Source1:        chatgpt-launcher.sh
 Source2:        chatgpt-LICENSE
+Source3:        com.openai.chatgpt.metainfo.xml
 
 ExclusiveArch:  x86_64
 
 BuildRequires:  appstream
-BuildRequires:  binutils
 BuildRequires:  coreutils
+BuildRequires:  cpio
 BuildRequires:  desktop-file-utils
-BuildRequires:  xz
 
 # Runtime-only deps the ELF generator cannot see; linked libraries are
 # auto-detected from DT_NEEDED and deliberately not repeated.
 # - xdg-utils: the app shells out to xdg-open/xdg-settings.
 # - libsecret: Electron uses it for keyring integration.
 # - libnotify, libXScrnSaver: loaded indirectly via Electron.
-# - libusb1, tpm2-tss: upstream-declared Debian dependencies.
-# - xz: upstream Depends: xz-utils (the bundled Codex uses it).
+# - libusb1, tpm2-tss: the upstream RPM requires libusb-1.0 and libtss2-esys.
+# - xz: the upstream RPM requires xz (the bundled Codex uses it).
 # - glib2: provides /usr/bin/gio, used by the app's desktop integration.
 Requires:       xdg-utils
 Requires:       libnotify
@@ -103,15 +109,13 @@ Requires:       glib2
 
 Recommends:     git
 
-Conflicts:      chatgpt
-
 %description
 ChatGPT desktop application for Linux, repackaged from OpenAI's official
-Debian package. The launcher honours ~/.config/chatgpt-flags.conf. This
-package installs the same application files as the chatgpt RPM rewrap, so
-the two packages conflict; install one or the other.
+RPM. The launcher honours ~/.config/chatgpt-flags.conf.
 
 %prep
+# Verify the vendored RPM against the digest the sweep pins in %%global digest.
+# 'none' skips the check.
 if [ '%{digest}' != 'none' ]; then
     actual="$(sha256sum %{SOURCE0} | cut -d' ' -f1)"
     if [ "$actual" != '%{digest}' ]; then
@@ -121,13 +125,14 @@ if [ '%{digest}' != 'none' ]; then
     echo "chatgpt-desktop: sha256 verified"
 fi
 
-# A .deb is an ar archive: data.tar.xz is the file payload.
-ar p %{SOURCE0} data.tar.xz > data.tar.xz
-tar -xJf data.tar.xz
+# Unpack the upstream RPM
+rpm2cpio %{SOURCE0} | cpio -idmu
 
-# The Debian copyright file covers the bundled Electron runtime; the upstream
-# terms pointer is the application license.
-cp usr/share/doc/chatgpt/copyright LICENSE.electron
+# The application license is OpenAI's terms (carried in the package dir);
+# the upstream RPM ships LICENSE and LICENSES.chromium.html under
+# /usr/lib/chatgpt/ for the bundled Electron runtime — the LICENSE file is
+# the package's second license.
+cp usr/lib/chatgpt/LICENSE LICENSE.electron
 cp %{SOURCE2} LICENSE
 
 %build
@@ -136,20 +141,24 @@ cp %{SOURCE2} LICENSE
 %install
 cp -a usr %{buildroot}/
 
-# Replace the upstream one-line launcher with the flags-file-aware one.
+# Upstream's /etc (an AppArmor profile, the GPG keys and the
+# yum.repos.d/chatgpt.repo drop-in of upstream's self-hosted repository)
+# and the Debian-style doc tree have no consumer on Fedora — and the
+# unclaimed doc files would fail the unpackaged-files check. Only usr/ is
+# copied, so none of it is ever packaged; the doc tree must go.
+rm -rf %{buildroot}%{_datadir}/doc/chatgpt
+
+# Replace the upstream one-line launcher with the flags-file-aware one; the
+# /usr/bin/chatgpt symlink points here, so both entry points honour the
+# flags file.
 install -Dm755 %{SOURCE1} %{buildroot}/usr/lib/chatgpt/codex-launcher
 
-# Retag the AppStream metadata for the Fedora package name.
+# Install the curated AppStream metainfo (the upstream one is minimal) and
+# retag both metadata files for the Fedora package name.
+install -Dm0644 %{SOURCE3} %{buildroot}%{_metainfodir}/com.openai.chatgpt.metainfo.xml
 sed -i 's|<pkgname>chatgpt</pkgname>|<pkgname>chatgpt-desktop</pkgname>|' \
     %{buildroot}%{_metainfodir}/com.openai.chatgpt.metainfo.xml \
     %{buildroot}%{_datadir}/swcatalog/xml/com.openai.chatgpt.xml
-
-# Debian-only integration: the AppArmor profile and the apt repository setup
-# in the deb's maintainer scripts have no equivalent on Fedora (SELinux).
-rm -rf %{buildroot}/etc
-
-# Debian's linter override and doc tree have no consumer on Fedora.
-rm -rf %{buildroot}%{_datadir}/doc/chatgpt %{buildroot}%{_datadir}/lintian
 
 %check
 desktop-file-validate %{buildroot}%{_datadir}/applications/chatgpt.desktop
@@ -165,5 +174,13 @@ appstreamcli validate --no-net %{buildroot}%{_metainfodir}/com.openai.chatgpt.me
 %{_datadir}/pixmaps/chatgpt.png
 
 %changelog
+* Mon Oct 26 2026 halcyon-autoupdate <aahsnr041@proton.me> - 26.1021.22027-2
+- Rewrap the official upstream RPM instead of the Debian package; the
+  curated AppStream metainfo replaces upstream's minimal one and the
+  flags-file-aware launcher is kept. License files are OpenAI's terms plus
+  the bundled Electron runtime's LICENSE. Upstream's /etc machinery
+  (AppArmor profile, GPG keys, self-repo drop-in) and the Debian-style doc
+  tree are not packaged.
+
 * Mon Oct 26 2026 halcyon-autoupdate <aahsnr041@proton.me> - 26.1021.22027-1
 - Initial package: rewrap of OpenAI's official Debian package

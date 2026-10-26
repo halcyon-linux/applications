@@ -8,7 +8,7 @@
 
 Name:           openchamber
 Version:        2.5.2
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Agentic Development Environment based on OpenCode AI agent
 License:        MIT
 URL:            https://openchamber.dev/
@@ -50,6 +50,11 @@ rm -rf %{buildroot}/usr/lib/.build-id
 # the in-app updater would fight dnf
 rm -f %{buildroot}/opt/OpenChamber/resources/app-update.yml
 install -Dpm0644 %{SOURCE1} %{buildroot}%{_licensedir}/%{name}/LICENSE
+# The vendor payload carries node-native modules with upstream's own
+# build-machine RPATHs — sherpa-onnx.node ships an absolute runpath into
+# the upstream CI workspace plus an empty entry. check-rpaths hard-fails
+# exactly those two classes; allow them and keep the check for the rest.
+export QA_RPATHS=$(( 0x0002 | 0x0010 ))
 
 %check
 desktop-file-validate %{buildroot}%{_datadir}/applications/*.desktop
@@ -62,5 +67,10 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/*.desktop
 %license %{_licensedir}/%{name}/LICENSE
 
 %changelog
+* Mon Oct 26 2026 halcyon-autoupdate <aahsnr041@proton.me> - 2.5.2-2
+- Allow the vendor payload's upstream-CI RPATH classes through check-rpaths
+  (QA_RPATHS 0x0002|0x0010): sherpa-onnx.node ships both, and the hook
+  hard-failed every openchamber build so far
+
 * Fri Oct 23 2026 halcyon-autobuild - 2.5.0-1
 - Initial packaging (vendor-RPM rewrap per the opencode-desktop pattern)

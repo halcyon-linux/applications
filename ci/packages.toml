@@ -111,15 +111,6 @@ batch = 0
 feed = "custom"
 custom = "opencode_desktop"
 
-# chatgpt: vendor rewrap of OpenAI's official RPM (Electron app); the sweep
-# mirrors the AUR chatgpt-desktop pkgver and HEAD-probes the x86_64 RPM URL.
-[chatgpt]
-batch = 0
-
-[chatgpt.updates]
-feed = "custom"
-custom = "chatgpt"
-
 # claude-desktop: vendor rewrap of Anthropic's official .deb; the apt
 # Packages index supplies both the version and the sha256.
 [claude-desktop]
@@ -148,8 +139,9 @@ batch = 0
 feed = "custom"
 custom = "claude-science"
 
-# chatgpt-desktop: vendor rewrap of OpenAI's official .deb, the AUR
-# chatgpt-desktop packaging. It conflicts with the RPM-based chatgpt.
+# chatgpt-desktop: vendor rewrap of OpenAI's official RPM, the AUR
+# chatgpt-desktop packaging; the upstream yum repodata supplies the version,
+# the upstream release number and the sha256.
 [chatgpt-desktop]
 batch = 0
 

@@ -356,16 +356,89 @@ def custom_claude_desktop(spec: SpecFile, pkg_dir: Path) -> None:
 
 
 def custom_chatgpt_desktop(spec: SpecFile, pkg_dir: Path) -> None:
-    # OpenAI publishes the .deb and its SHA256 in the same apt index; the AUR
-    # chatgpt-desktop package mirrors that version but carries no digest.
-    _apt_index_update(
-        spec,
-        "https://persistent.oaistatic.com/codex-app-prod/linux/deb/"
-        "dists/stable/main/binary-amd64/Packages",
-        "chatgpt",
-        "amd64",
-        lambda version: f"pool/main/c/chatgpt/chatgpt_{version}_amd64.deb",
-    )
+    # OpenAI serves the ChatGPT desktop RPMs from a real yum repository at
+    # persistent.oaistatic.com/codex-app-prod/linux/rpm/x86_64 — the primary
+    # metadata is the first-party source of the version, of the upstream
+    # release number (part of the pool filename the spec's Source0
+    # interpolates) and of the sha256 the spec pins in %global digest for
+    # the %prep checksum. The .deb channel mirrors the same builds; the RPM
+    # is the native artifact.
+    import gzip
+    import zlib
+    import xml.etree.ElementTree as ET
+
+    def _xml(payload, what: str):
+        # a CDN hiccup can serve an HTML error page with HTTP 200, or a
+        # truncated body: raise a FeedError, not a raw ParseError/EOFError —
+        # sweep.py does not catch those and one of them would abort the
+        # whole sweep run instead of failing this package
+        try:
+            return ET.fromstring(payload)
+        except ET.ParseError as exc:
+            raise feeds.FeedError(
+                f"chatgpt-desktop: malformed {what}: {exc}") from exc
+
+    repo = "https://persistent.oaistatic.com/codex-app-prod/linux/rpm/x86_64/"
+    repomd = _xml(feeds.fetch_text(repo + "repodata/repomd.xml"), "repomd.xml")
+    repo_ns = "{http://linux.duke.edu/metadata/repo}"
+    primary_href = ""
+    for data in repomd.iter(f"{repo_ns}data"):
+        if data.get("type") == "primary":
+            loc = data.find(f"{repo_ns}location")
+            if loc is not None:
+                primary_href = loc.get("href", "")
+            break
+    if not primary_href:
+        raise feeds.FeedError("chatgpt-desktop: repodata carries no primary index")
+
+    common_ns = "{http://linux.duke.edu/metadata/common}"
+    try:
+        primary = gzip.decompress(feeds.fetch_bytes(repo + primary_href))
+    except (EOFError, OSError, zlib.error) as exc:
+        raise feeds.FeedError(
+            f"chatgpt-desktop: cannot decompress {primary_href}: {exc}") from exc
+    candidates = []
+    for pkg in _xml(primary, primary_href).iter(f"{common_ns}package"):
+        if pkg.findtext(f"{common_ns}name") != "chatgpt":
+            continue
+        if pkg.findtext(f"{common_ns}arch") != "x86_64":
+            continue
+        ver = pkg.find(f"{common_ns}version")
+        checksum = pkg.find(f"{common_ns}checksum")
+        loc = pkg.find(f"{common_ns}location")
+        if ver is None or checksum is None or loc is None:
+            continue
+        digest = checksum.text or ""
+        # a stanza without a usable sha256 is skipped, like _apt_index_update
+        # skips incomplete stanzas; if none survive, the error below names it
+        if checksum.get("type") != "sha256" or not re.fullmatch(
+                r"[0-9a-f]{64}", digest):
+            continue
+        candidates.append((ver.get("ver", ""), ver.get("rel", ""), digest,
+                           loc.get("href", "")))
+    if not candidates:
+        raise feeds.FeedError(
+            f"chatgpt-desktop: no x86_64 chatgpt stanza with a sha256 in "
+            f"{repo}{primary_href}")
+
+    from functools import cmp_to_key
+
+    from vercmp import rpmvercmp
+
+    def _newer(a, b):
+        order = rpmvercmp(a[0], b[0])
+        return order if order else rpmvercmp(a[1], b[1])
+
+    version, rel, digest, href = max(candidates, key=cmp_to_key(_newer))
+    expected = f"chatgpt-{version}-{rel}.x86_64.rpm"
+    if href != expected:
+        raise feeds.FeedError(
+            f"chatgpt-desktop: pool filename {href!r} does not match {expected!r}")
+    if not feeds.head_probe(repo + href):
+        raise feeds.FeedError(f"chatgpt-desktop: RPM not published at {repo}{href}")
+    spec.set_version(version)
+    spec.set_global("upstream_rel", rel)
+    spec.set_global("digest", digest)
 
 
 def custom_claude_desktop_extra(spec: SpecFile, pkg_dir: Path) -> None:
@@ -431,25 +504,3 @@ def custom_claude_science(spec: SpecFile, pkg_dir: Path) -> None:
             f"claude-science: versioned URL not published: {versioned}")
     spec.set_version(version)
     spec.set_global("md5", md5)
-
-
-def custom_chatgpt(spec: SpecFile, pkg_dir: Path) -> None:
-    # OpenAI publishes ChatGPT desktop RPMs at persistent.oaistatic.com but
-    # provides no version feed. The AUR package chatgpt-desktop tracks the
-    # version reliably; mirror its pkgver. The RPM URL follows the pattern
-    # chatgpt-<version>-1.x86_64.rpm under the x86_64 pool. HEAD-probe the
-    # constructed URL so a stale AUR version never bumps the spec to a
-    # non-existent RPM. No public sha256 is published for the RPM; skip the
-    # %%prep checksum by pinning 'none' in %%global digest.
-    aur_version = _aur_pkgver("chatgpt-desktop")
-    # AUR version is pkgver-pkgrel (e.g. 26.1021.22027-1); keep pkgver only.
-    version = aur_version.rsplit("-", 1)[0]
-    url = (
-        f"https://persistent.oaistatic.com/codex-app-prod/linux/rpm/x86_64/"
-        f"chatgpt-{version}-1.x86_64.rpm"
-    )
-    if feeds.head_probe(url, user_agent="Mozilla/5.0"):
-        spec.set_version(version)
-        spec.set_global("digest", "none")
-        return
-    raise feeds.FeedError(f"chatgpt: RPM not found at {url}")
