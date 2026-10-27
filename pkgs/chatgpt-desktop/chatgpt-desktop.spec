@@ -51,10 +51,13 @@
 # unresolvable — and libpthread.so.0(GLIBC_2.17) is a relic of upstream's
 # older build toolchain: glibc 2.34+ serves the pthread symbols from
 # libc.so.6, which these binaries also require and which resolves. The
-# (\(|$) anchors keep the Fedora glibc forms (libc.so.6, libdl.so.2,
-# libm.so.6) out of the match.
+# ([(]|$) anchors keep the Fedora glibc forms (libc.so.6, libdl.so.2,
+# libm.so.6) out of the match. Brackets, not backslashes, escape the regex
+# metacharacters: rpm consumes backslashes while expanding the macro, which
+# left unbalanced parentheses that rpm silently discarded as an invalid regex
+# (the previous revision's exclusions never applied).
 %global __provides_exclude_from ^/usr/lib/chatgpt/
-%global __requires_exclude ^libffmpeg\.so|^libvulkan\.so\.1|^libEGL\.so|^libGLESv2\.so|^libvk_swiftshader\.so|^libqt5_shim\.so|^libqt6_shim\.so|^libc\.so(\(|$)|^libc\.musl|^libc\+\+_shared\.so|^libdl\.so(\(|$)|^libm\.so(\(|$)|^liblog\.so|^libpthread\.so\.0\(GLIBC_2\.17\)|^libgcc_s\.so\.1\(GCC_3\.5\)|^libstdc\+\+\.so\.6\(CXXABI_ARM_|^libvips-cpp\.so
+%global __requires_exclude ^libffmpeg[.]so|^libvulkan[.]so[.]1|^libEGL[.]so|^libGLESv2[.]so|^libvk_swiftshader[.]so|^libqt5_shim[.]so|^libqt6_shim[.]so|^libc[.]so([(]|$)|^libc[.]musl|^libc[+][+]_shared[.]so|^libdl[.]so([(]|$)|^libm[.]so([(]|$)|^liblog[.]so|^libpthread[.]so[.]0[(]GLIBC_2[.]17[)]|^libgcc_s[.]so[.]1[(]GCC_3[.]5[)]|^libstdc[+][+][.]so[.]6[(]CXXABI_ARM_|^libvips-cpp[.]so
 
 # Pinned by the sweep from the upstream repodata; 'none' skips the check.
 %global digest d5069043701a12760cce0447f7688859e9988dfbb04daaa9be0be0b762ff895f
@@ -65,7 +68,7 @@
 
 Name:           chatgpt-desktop
 Version:        26.1021.22027
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        ChatGPT by OpenAI — official Linux desktop app
 License:        LicenseRef-Proprietary
 URL:            https://chatgpt.com/download
@@ -183,6 +186,10 @@ appstreamcli validate --no-net %{buildroot}%{_metainfodir}/com.openai.chatgpt.me
 %{_datadir}/pixmaps/chatgpt.png
 
 %changelog
+* Tue Oct 27 2026 halcyon-linux <aahsnr041@proton.me> - 26.1021.22027-4
+- Fix the requires exclusion: rpm strips backslashes when expanding the
+  macro, so the regex was invalid and ignored. Use bracket escapes instead.
+
 * Mon Oct 26 2026 halcyon-autoupdate <aahsnr041@proton.me> - 26.1021.22027-3
 - Exclude the bundle-private sonames the dependency generator picks up from
   the node-hid prebuilds (bionic/musl/ARM forms, libc++_shared.so, the
