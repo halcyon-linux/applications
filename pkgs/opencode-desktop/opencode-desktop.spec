@@ -17,8 +17,8 @@
 %global __requires_exclude ^libffmpeg[.]so|^libvulkan[.]so[.]1|^libEGL[.]so|^libGLESv2[.]so|^libvk_swiftshader[.]so
 
 Name:           opencode-desktop
-Version:        2.1.4
-Release:        2%{?dist}
+Version:        2.2.0
+Release:        1%{?dist}
 Summary:        OpenCode desktop client
 
 License:        MIT
