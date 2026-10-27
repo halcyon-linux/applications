@@ -202,12 +202,13 @@ custom = "jupyterlab_desktop"
 
 # appflowy: vendor rewrap of the official RPM from AppFlowy-IO/AppFlowy
 # GitHub releases; tag is the version (e.g. 0.14.11), RPM filename embeds it.
+# Custom feed so the RPM's sha256 is re-pinned on every bump.
 [appflowy]
 batch = 0
 
 [appflowy.updates]
-feed = "github-release"
-repo = "AppFlowy-IO/AppFlowy"
+feed = "custom"
+custom = "appflowy"
 
 # ------------------------------------------------------------------ tools
 # onlyoffice-desktopeditors: heavy vendor rewrap of ONLYOFFICE's el7-built

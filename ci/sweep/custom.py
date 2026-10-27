@@ -541,3 +541,30 @@ def custom_jupyterlab_desktop(spec: SpecFile, pkg_dir: Path) -> None:
     raise feeds.FeedError(
         "jupyterlab-desktop: no release in the last 30 ships "
         "JupyterLab-Setup-Fedora-x64.rpm")
+
+
+def custom_appflowy(spec: SpecFile, pkg_dir: Path) -> None:
+    # AppFlowy tags are the bare version (e.g. 0.14.11). The generic
+    # github-release feed would bump Version but leave the RPM's sha256
+    # stale, so the digest GitHub publishes for the asset is pinned here
+    # ('none' skips the %prep check when upstream publishes none).
+    releases = feeds.fetch_json(
+        "https://api.github.com/repos/AppFlowy-IO/AppFlowy/releases?per_page=30"
+    )
+    for release in releases:
+        if release.get("draft") or release.get("prerelease"):
+            continue
+        tag = release.get("tag_name", "")
+        if not re.fullmatch(r"[0-9][0-9.]*", tag):
+            continue
+        for asset in release.get("assets", []):
+            if asset.get("name") != f"AppFlowy-{tag}-linux-x86_64.rpm":
+                continue
+            digest = asset.get("digest") or ""
+            digest = digest[len("sha256:"):] if digest.startswith("sha256:") else "none"
+            spec.set_version(tag)
+            spec.set_global("digest", digest)
+            return
+    raise feeds.FeedError(
+        "appflowy: no release in the last 30 ships AppFlowy-<ver>-linux-x86_64.rpm"
+    )

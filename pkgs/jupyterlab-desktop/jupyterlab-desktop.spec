@@ -66,9 +66,9 @@ fi
 %install
 %__rm -rf %{buildroot}
 
-# The vendor RPM installs to /opt/jupyterlab-desktop — move it to our private libdir
+# The vendor RPM installs to /opt/JupyterLab — move it to our private libdir
 install -dm755 %{buildroot}%{_libdir}
-mv opt/jupyterlab-desktop %{buildroot}%{_libdir}/jupyterlab-desktop
+mv opt/JupyterLab %{buildroot}%{_libdir}/jupyterlab-desktop
 
 # System launcher in /usr/bin
 mkdir -p %{buildroot}%{_bindir}
@@ -78,12 +78,13 @@ exec %{_libdir}/jupyterlab-desktop/jupyterlab-desktop "$@"
 EOF
 chmod 755 %{buildroot}%{_bindir}/jupyterlab-desktop
 
-# Desktop file (vendor provides one at /usr/share/applications/jupyterlab-desktop.desktop)
+# Desktop file pointed at the launcher (the vendor one hardcodes /opt/JupyterLab)
+sed -i 's|^Exec=.*|Exec=jupyterlab-desktop %U|' usr/share/applications/jupyterlab-desktop.desktop
 %__install -Dm644 usr/share/applications/jupyterlab-desktop.desktop \
     %{buildroot}%{_datadir}/applications/jupyterlab-desktop.desktop
 
-# Icons (vendor provides hicolor icons)
-cp -a usr/share/icons %{buildroot}%{_datadir}/icons
+%__install -Dm644 usr/share/icons/hicolor/512x512/apps/jupyterlab-desktop.png \
+    %{buildroot}%{_datadir}/icons/hicolor/512x512/apps/jupyterlab-desktop.png
 
 # License
 %__install -Dm644 %{SOURCE1} %{buildroot}%{_licensedir}/jupyterlab-desktop/LICENSE
@@ -92,7 +93,7 @@ cp -a usr/share/icons %{buildroot}%{_datadir}/icons
 %{_bindir}/jupyterlab-desktop
 %{_libdir}/jupyterlab-desktop/
 %{_datadir}/applications/jupyterlab-desktop.desktop
-%{_datadir}/icons/hicolor/*/apps/jupyterlab-desktop.png
+%{_datadir}/icons/hicolor/512x512/apps/jupyterlab-desktop.png
 %{_licensedir}/jupyterlab-desktop/LICENSE
 
 %changelog
