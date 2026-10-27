@@ -22,14 +22,14 @@
 name: update
 
 on:
-  # two triggers, two purposes: the weekly cron is the floor (sweeps even in
-  # a week with no cascade), and the workflow_run chain sweeps right after
+  # two triggers, two purposes: the daily cron is the floor (sweeps even on
+  # a day with no cascade; it also reconciles git against Copr, below), and the workflow_run chain sweeps right after
   # every successful copr-build so fresh builds meet the newest upstream
   # immediately. A bump's own cascade re-triggers the sweep once more; that
   # second run finds nothing upstream and exits without committing, so the
   # chain ends.
   schedule:
-    - cron: "17 04 * * 1"
+    - cron: "17 04 * * *"
   workflow_run:
     workflows: [copr-build]
     types: [completed]
@@ -51,6 +51,7 @@ permissions:
   packages: read
   pull-requests: write
   actions: write
+  issues: write
 
 concurrency:
   group: update
@@ -85,6 +86,20 @@ jobs:
         run: |
           git config user.name "halcyon-autoupdate"
           git config user.email "aahsnr041@proton.me"
+      # The sweep only sees NEW upstream versions. A bump whose dispatch was
+      # lost, or whose Copr build failed, would never be retried — compare
+      # every spec to the latest succeeded Copr build and resubmit the
+      # difference. Runs BEFORE the sweep so pr-mode's unmerged edits are
+      # never mistaken for stale builds.
+      - name: Find packages Copr has not published
+        id: reconcile
+        run: |
+          set -eu
+          # a build that failed on the current NVR is retried only on Mondays
+          retry=""; [ "$(date -u +%u)" = 1 ] && retry="--retry-failed"
+          python3 ci/reconcile.py $retry > "$RUNNER_TEMP/stale.txt" 2> "$RUNNER_TEMP/failed.txt"
+          echo "stale: $(cat "$RUNNER_TEMP/stale.txt")"
+          cat "$RUNNER_TEMP/failed.txt"
       - name: Check the landing mode
         # An unknown UPDATE_MODE would silently match neither the commit
         # step nor the PR step: the sweep would compute its bumps and
@@ -166,6 +181,41 @@ jobs:
           gh pr create --head "bump/${date_tag}" \
             --title "chore(bump): upstream versions $(date -u +%Y-%m-%d)" \
             --body "Automated by .github/workflows/update.yml (\`ci/sweep/sweep.py\`). Review the version transitions and merge — copr-build.yml then builds the changed packages and every package in a higher batch."
+      - name: Resubmit packages Copr has not published
+        if: "!cancelled()"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          stale="$(cat "$RUNNER_TEMP/stale.txt")"
+          [ -n "$stale" ] || exit 0
+          gh workflow run copr-build.yml --ref main -f only="${stale}"
+      # one rolling issue: opened/refreshed while a feed or build is broken,
+      # closed when a run is clean — a stale package can never stay silent
+      - name: Report problems in an issue
+        if: "!cancelled()"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SWEEP: ${{ steps.sweep.outcome }}
+        run: |
+          set -eu
+          title="update: broken upstream feeds or failed Copr builds"
+          num="$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number // empty')"
+          if [ "$SWEEP" = success ] && [ ! -s "$RUNNER_TEMP/failed.txt" ]; then
+            [ -z "$num" ] || gh issue close "$num" --comment "Clean run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            exit 0
+          fi
+          body="Sweep: ${SWEEP}. Copr builds failed for: $(sed 's/^failed: //' "$RUNNER_TEMP/failed.txt" | tr '\n' ' ')
+          Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          if [ -n "$num" ]; then gh issue comment "$num" --body "$body"
+          else gh issue create --title "$title" --body "$body"; fi
+      # GitHub disables scheduled workflows after 60 days without repo
+      # activity; re-enabling on every run keeps the daily floor alive.
+      - name: Keep the schedule enabled
+        if: "!cancelled()"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow enable update.yml || true
       - name: Fail the run if a feed errored
         # the bumps above already landed; failing here only flags the broken
         # feed (red run + notifications) — it never blocks the other bumps.
