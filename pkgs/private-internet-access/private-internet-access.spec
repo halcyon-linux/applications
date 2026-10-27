@@ -23,19 +23,20 @@
 %global             debug_package %{nil}
 %global _build_id_links none
 %global             __os_install_post %{nil}
-# the bundle's ELFs were linked against a Qt built with the generic private
-# symbol tag Qt_6_PRIVATE_API (Arch-style); Fedora's Qt emits per-minor tags
-# (e.g. Qt_6.11_PRIVATE_API), so no Fedora repo provides the generic tag —
-# exclude it. Fedora 44 additionally ships NO libQt6Bodymovin.so.6 at all
-# (the Qt3D Lottie lib is gone from the 6.11 stack and qt6-qtlottie ships
-# none — verified against the release+updates repodata), so the public
-# Bodymovin sonames are excluded too. The bundle ships no 3D libs of its
-# own; every other public Qt_6 requires still resolves from Fedora's qt6-3d.
-%global             __requires_exclude ^libQt6.*Qt_6_PRIVATE_API.*$|^libQt6Bodymovin\.so.*$
+# The bundle is self-contained: it ships its own Qt6 (built with the generic
+# private symbol tag Qt_6_PRIVATE_API and private libs such as libQt6XcbQpa,
+# which Fedora does not provide), ICU 74, OpenSSL 3 and the xcb/X11 stack, and
+# its ELFs find them through RPATH. Those libraries carry SONAMEs, so the
+# dependency generator would advertise them as system providers; this repo is
+# consumed at priority=1, so those Provides would shadow Fedora's own packages
+# in any dependency resolution. Suppress Provides from the bundle and the
+# Requires on the same private families, which nothing in Fedora satisfies.
+%global             __provides_exclude_from ^/opt/piavpn/
+%global             __requires_exclude ^(libQt6[A-Za-z0-9]*|libicu(data|i18n|uc)|libcrypto|libssl|libxcb[a-z0-9-]*|libX11(-xcb)?)[.]so
 
 Name:               private-internet-access
 Version:            3.8.0
-Release:            1%{?dist}
+Release:            2%{?dist}
 Summary:            Private Internet Access VPN client (official installer rewrap)
 License:            LicenseRef-PIA
 URL:                https://www.privateinternetaccess.com
@@ -127,6 +128,12 @@ setcap cap_net_bind_service=ep /opt/piavpn/bin/pia-unbound || :
 /opt/piavpn/
 
 %changelog
+* Tue Oct 27 2026 halcyon-linux <aahsnr041@proton.me> - 3.8.0-2
+- Stop advertising the bundled libraries as system Provides (__provides_exclude_from): with the
+  repo at priority=1 they shadowed Fedora's packages (libcrypto.so.3, ICU, Qt6, xcb) and were
+  pulled into unrelated installs; exclude the Requires on the bundled Qt6/ICU/OpenSSL/xcb/X11
+  families instead of only the Qt private-API tags
+
 * Wed Sep 30 2026 halcyon-autoupdate <aahsnr041@proton.me> - 3.7.2-3
 - exclude the unresolvable Qt_6_PRIVATE_API auto-requires (upstream's Qt
   uses the generic private tag; Fedora's qt6-3d only satisfies the public ones)

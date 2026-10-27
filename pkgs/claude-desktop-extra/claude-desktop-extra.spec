@@ -38,7 +38,7 @@
 # providers. They are private to the bundle, so suppress Provides from that
 # directory and the Requires on the bundled libs nothing in Fedora provides.
 %global __provides_exclude_from ^/usr/lib/claude-desktop/
-%global __requires_exclude ^libffmpeg\.so|^libvulkan\.so\.1|^libvk_swiftshader\.so
+%global __requires_exclude ^libffmpeg[.]so|^libvulkan[.]so[.]1|^libvk_swiftshader[.]so
 
 # Upstream releases re-use a base version for several builds (v3.6556.2-7);
 # extra_rel is the release number after the dash. The sweep pins both it and
@@ -48,7 +48,7 @@
 
 Name:           claude-desktop-extra
 Version:        3.6556.2
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Claude Desktop with Computer Use, themes, multi-profile and Quick Entry
 License:        LicenseRef-Proprietary
 URL:            https://github.com/patrickjaja/claude-desktop-extra
@@ -142,5 +142,10 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/com.anthropic.Claude.
 %{_datadir}/mime/packages/com.anthropic.Claude.xml
 
 %changelog
+* Tue Oct 27 2026 halcyon-linux <aahsnr041@proton.me> - 3.6556.2-2
+- Escape the __requires_exclude regex with brackets: rpm strips backslashes while
+  expanding the macro, leaving a loose pattern (the bug that silently disabled
+  chatgpt-desktop's exclusion)
+
 * Mon Oct 26 2026 halcyon-autoupdate <aahsnr041@proton.me> - 3.6556.2-1
 - Initial package: rewrap of the claude-desktop-extra x86_64 RPM

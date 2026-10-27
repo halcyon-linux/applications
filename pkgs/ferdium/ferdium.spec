@@ -9,9 +9,19 @@
 #   * the vendor (a or b) alternates mapped to Fedora package names
 # Version is swept from the ferdium-app GitHub releases (tags 1:1 with
 # releases).
+# The bundled libraries under /opt/Ferdium carry SONAMEs, so the dependency
+# generator would advertise them as system providers. This repo is consumed at
+# priority=1, so those Provides would shadow Fedora's own packages in any
+# dependency resolution; they are private to the bundle.
+# The Requires on the bundled Chromium libs nothing in Fedora provides are
+# dropped as well. Brackets, not backslashes, escape regex metacharacters:
+# rpm consumes backslashes while expanding the macro.
+%global __provides_exclude_from ^/opt/Ferdium/
+%global __requires_exclude ^libffmpeg[.]so|^libvulkan[.]so[.]1|^libEGL[.]so|^libGLESv2[.]so|^libvk_swiftshader[.]so
+
 Name:           ferdium
 Version:        7.2.3
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Messaging app bringing all your services into one installable
 License:        Apache-2.0
 URL:            https://ferdium.org/
@@ -90,6 +100,11 @@ chmod 4755 %{buildroot}/opt/Ferdium/chrome-sandbox
 %{_licensedir}/ferdium/
 
 %changelog
+* Tue Oct 27 2026 halcyon-linux <aahsnr041@proton.me> - 7.2.3-2
+- Stop advertising the bundled libraries as system Provides (__provides_exclude_from): with the
+  repo at priority=1 they shadowed Fedora's packages and were pulled into unrelated installs;
+  drop the matching Requires on the bundled Chromium libs
+
 * Sat Sep 26 2026 halcyon-autobuild - 7.2.3-1
 - initial package: vendor RPM rewrap on the ticktick pattern
 - /usr/bin/ferdium launcher, SUID chrome-sandbox, license consolidation

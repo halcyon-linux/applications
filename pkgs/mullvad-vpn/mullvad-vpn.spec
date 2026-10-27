@@ -11,9 +11,19 @@
 %global _build_id_links none
 %global             __os_install_post %{nil}
 
+# The bundled libraries under /opt/Mullvad VPN carry SONAMEs, so the dependency
+# generator would advertise them as system providers. This repo is consumed at
+# priority=1, so those Provides would shadow Fedora's own packages in any
+# dependency resolution; they are private to the bundle.
+# The Requires on the bundled Chromium libs nothing in Fedora provides are
+# dropped as well. Brackets, not backslashes, escape regex metacharacters:
+# rpm consumes backslashes while expanding the macro.
+%global __provides_exclude_from ^/opt/Mullvad.VPN/
+%global __requires_exclude ^libffmpeg[.]so|^libvulkan[.]so[.]1|^libEGL[.]so|^libGLESv2[.]so|^libvk_swiftshader[.]so
+
 Name:               mullvad-vpn
 Version:            2026.5
-Release:            1%{?dist}
+Release:            2%{?dist}
 Summary:            Mullvad VPN client (official RPM rewrap)
 License:            GPL-3.0-or-later
 URL:                https://mullvad.net
@@ -74,6 +84,11 @@ cp -a extract/usr/. %{buildroot}%{_prefix}/
 "/opt/Mullvad VPN/"
 
 %changelog
+* Tue Oct 27 2026 halcyon-linux <aahsnr041@proton.me> - 2026.5-2
+- Stop advertising the bundled libraries as system Provides (__provides_exclude_from): with the
+  repo at priority=1 they shadowed Fedora's packages and were pulled into unrelated installs;
+  drop the matching Requires on the bundled Chromium libs
+
 * Tue Sep 29 2026 halcyon-autoupdate <aahsnr041@proton.me> - 2026.5-1
 - initial package: vendor rewrap of Mullvad's official MullvadVPN-2026.5
   RPM (GUI, daemon, early-boot blocking unit, CLI, completions)

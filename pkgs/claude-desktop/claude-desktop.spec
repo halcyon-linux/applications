@@ -44,14 +44,14 @@
 # so suppress Provides from that directory and the Requires on the bundled
 # libs nothing in Fedora provides.
 %global __provides_exclude_from ^/usr/lib/claude-desktop/
-%global __requires_exclude ^libffmpeg\.so|^libvulkan\.so\.1|^libvk_swiftshader\.so
+%global __requires_exclude ^libffmpeg[.]so|^libvulkan[.]so[.]1|^libvk_swiftshader[.]so
 
 # Pinned by the sweep from the apt Packages index; 'none' skips the check.
 %global digest 0f6ed1f2845c30419b8545a8320676d7464a19f625e05e02919238aa6978ecb4
 
 Name:           claude-desktop
 Version:        3.6556.2
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Official Claude AI desktop app — Chat, Cowork, and Claude Code
 License:        LicenseRef-Proprietary
 URL:            https://claude.com/download
@@ -187,5 +187,10 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/com.anthropic.Claude.
 %{_datadir}/mime/packages/com.anthropic.Claude.xml
 
 %changelog
+* Tue Oct 27 2026 halcyon-linux <aahsnr041@proton.me> - 3.6556.2-2
+- Escape the __requires_exclude regex with brackets: rpm strips backslashes while
+  expanding the macro, leaving a loose pattern (the bug that silently disabled
+  chatgpt-desktop's exclusion)
+
 * Mon Oct 26 2026 halcyon-autoupdate <aahsnr041@proton.me> - 3.6556.2-1
 - Initial package: rewrap of Anthropic's official Debian package

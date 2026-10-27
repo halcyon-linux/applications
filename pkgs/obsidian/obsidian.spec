@@ -22,9 +22,19 @@
 %global _build_id_links none
 %global             __os_install_post %{nil}
 
+# The bundled libraries under %%{_libdir}/obsidian carry SONAMEs, so the dependency
+# generator would advertise them as system providers. This repo is consumed at
+# priority=1, so those Provides would shadow Fedora's own packages in any
+# dependency resolution; they are private to the bundle.
+# The Requires on the bundled Chromium libs nothing in Fedora provides are
+# dropped as well. Brackets, not backslashes, escape regex metacharacters:
+# rpm consumes backslashes while expanding the macro.
+%global __provides_exclude_from ^%{_libdir}/obsidian/
+%global __requires_exclude ^libffmpeg[.]so|^libvulkan[.]so[.]1|^libEGL[.]so|^libGLESv2[.]so|^libvk_swiftshader[.]so
+
 Name:               obsidian
 Version:            1.14.5
-Release:            1%{?dist}
+Release:            2%{?dist}
 Summary:            A powerful knowledge base that works on top of a local folder of plain text Markdown files
 License:            LicenseRef-Obsidian
 URL:                https://obsidian.md
@@ -108,6 +118,11 @@ chmod 755 %{buildroot}%{_bindir}/obsidian
 %{_licensedir}/obsidian/LICENSE-Obsidian
 
 %changelog
+* Tue Oct 27 2026 halcyon-linux <aahsnr041@proton.me> - 1.14.5-2
+- Stop advertising the bundled libraries as system Provides (__provides_exclude_from): with the
+  repo at priority=1 they shadowed Fedora's packages and were pulled into unrelated installs;
+  drop the matching Requires on the bundled Chromium libs
+
 * Fri Oct 23 2026 halcyon-autobuild - 1.14.4-3
 - fix launcher libdir substitution: use rpm --eval at build time to get the
   correct %{_libdir} (avoids macro expansion issues in Copr mock chroots

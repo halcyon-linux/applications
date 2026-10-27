@@ -6,9 +6,19 @@
 %define debug_package %{nil}
 %global _build_id_links none
 
+# The bundled libraries under /opt/OpenCode carry SONAMEs, so the dependency
+# generator would advertise them as system providers. This repo is consumed at
+# priority=1, so those Provides would shadow Fedora's own packages in any
+# dependency resolution; they are private to the bundle.
+# The Requires on the bundled Chromium libs nothing in Fedora provides are
+# dropped as well. Brackets, not backslashes, escape regex metacharacters:
+# rpm consumes backslashes while expanding the macro.
+%global __provides_exclude_from ^/opt/OpenCode/
+%global __requires_exclude ^libffmpeg[.]so|^libvulkan[.]so[.]1|^libEGL[.]so|^libGLESv2[.]so|^libvk_swiftshader[.]so
+
 Name:           opencode-desktop
 Version:        2.1.4
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        OpenCode desktop client
 
 License:        MIT
@@ -62,6 +72,11 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/*.desktop
 %license %{_licensedir}/%{name}/LICENSE
 
 %changelog
+* Tue Oct 27 2026 halcyon-linux <aahsnr041@proton.me> - 2.1.4-2
+- Stop advertising the bundled libraries as system Provides (__provides_exclude_from): with the
+  repo at priority=1 they shadowed Fedora's packages and were pulled into unrelated installs;
+  drop the matching Requires on the bundled Chromium libs
+
 * Sat Sep 26 2026 halcyon-autoupdate <aahsnr041@proton.me> - 2.0.18-1
 - initial packaging (vendor-RPM rewrap per the opencode-desktop-bin AUR
   pattern, with the bundled Electron runtime)

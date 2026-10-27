@@ -9,9 +9,18 @@
 %global _build_id_links none
 %global             __os_install_post %{nil}
 
+# The bundled libraries under %%{_libdir}/zen-browser carry SONAMEs, so the dependency
+# generator would advertise them as system providers. This repo is consumed at
+# priority=1, so those Provides would shadow Fedora's own packages in any
+# dependency resolution; they are private to the bundle. The Gecko, NSS and
+# NSPR libs it loads from its own directory are dropped from Requires too, or
+# the package would need libs nothing in Fedora provides.
+%global __provides_exclude_from ^%{_libdir}/zen-browser/
+%global __requires_exclude ^(libclearkey|libfreeblpriv3|libgkcodecs|liblgpllibs|libmoz[a-z0-9]+|libnspr4|libnss3|libnssutil3|libonnxruntime|libplc4|libplds4|libsmime3|libsoftokn3|libssl3|libxul)[.]so
+
 Name:               zen-browser
 Version:            1.23.4b
-Release:            1%{?dist}
+Release:            2%{?dist}
 Summary:            Zen Browser — a Firefox-based browser focused on privacy and customization
 License:            MPL-2.0
 URL:                https://zen-browser.app
@@ -58,6 +67,11 @@ done
 %license LICENSE
 
 %changelog
+* Tue Oct 27 2026 halcyon-linux <aahsnr041@proton.me> - 1.23.4b-2
+- Stop advertising the bundled libraries as system Provides (__provides_exclude_from): with the
+  repo at priority=1 they shadowed Fedora's packages and were pulled into unrelated installs;
+  drop the Requires on the bundled Gecko/NSS/NSPR libs
+
 * Tue Sep 29 2026 halcyon-autoupdate <aahsnr041@proton.me> - 1.22.3b-1
 - initial package (vendor rewrap of the official Linux tarball,
   shape per zed.spec/obsidian.spec)

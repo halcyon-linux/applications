@@ -10,7 +10,7 @@
 
 Name:           openchamber
 Version:        2.5.2
-Release:        4%{?dist}
+Release:        5%{?dist}
 Summary:        Agentic Development Environment based on OpenCode AI agent
 License:        MIT
 URL:            https://openchamber.dev/
@@ -32,7 +32,7 @@ BuildRequires:  desktop-file-utils
 # version, so that require is unsatisfiable even self-referentially and
 # failed repoclosure on 2.5.2-3 (observed 2026-10-26).
 %global __provides_exclude_from ^/opt/OpenChamber/
-%global __requires_exclude ^libonnxruntime\.so|^libsherpa-onnx-c-api\.so|^libffmpeg\.so
+%global __requires_exclude ^libonnxruntime[.]so|^libsherpa-onnx-c-api[.]so|^libffmpeg[.]so
 
 # Electron runtime deps — the automatic ELF deps cover linked sonames
 # (gtk3, nss, atk, ...); these are the ones the binary only dlopen()s,
@@ -83,6 +83,11 @@ appstreamcli validate --no-net %{buildroot}%{_metainfodir}/openchamber.metainfo.
 %license %{_licensedir}/%{name}/LICENSE
 
 %changelog
+* Tue Oct 27 2026 halcyon-linux <aahsnr041@proton.me> - 2.5.2-5
+- Escape the __requires_exclude regex with brackets: rpm strips backslashes while
+  expanding the macro, leaving a loose pattern (the bug that silently disabled
+  chatgpt-desktop's exclusion)
+
 * Mon Oct 26 2026 halcyon-autoupdate <aahsnr041@proton.me> - 2.5.2-4
 - Make the bundled sonames private: suppress Provides from /opt/OpenChamber
   and exclude the matching Requires — the bundled libonnxruntime has no

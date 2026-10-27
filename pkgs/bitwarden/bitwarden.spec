@@ -51,7 +51,7 @@
 # internally, so exclude it. The generated require string carries the arch
 # qualifier (libffmpeg.so()(64bit)), hence the prefix match without $.
 # Every other DT_NEEDED entry is a system library and stays auto-detected.
-%global __requires_exclude ^libffmpeg\.so
+%global __requires_exclude ^libffmpeg[.]so
 
 # upstream tags pre-releases with '-' (desktop-v2026.9.1-beta.1), which RPM
 # Version forbids — the sweep carries the raw tag in upstream_version (both
@@ -60,7 +60,7 @@
 
 Name:           bitwarden
 Version:	2026.10.1
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        A secure and free password manager for all of your devices
 License:        GPL-3.0-only
 URL:            https://bitwarden.com
@@ -140,6 +140,11 @@ appstreamcli validate --no-net %{buildroot}%{_metainfodir}/com.bitwarden.desktop
 %{_metainfodir}/com.bitwarden.desktop.metainfo.xml
 
 %changelog
+* Tue Oct 27 2026 halcyon-linux <aahsnr041@proton.me> - 2026.10.1-2
+- Escape the __requires_exclude regex with brackets: rpm strips backslashes while
+  expanding the macro, leaving a loose pattern (the bug that silently disabled
+  chatgpt-desktop's exclusion)
+
 * Sat Sep 12 2026 Anudeep D <anudeepd2@gmail.com> - 2026.8.0-2
 - Keep the packaged payload byte-identical: unset Fedora's ELF-rewriting brp
   hooks (brp-strip, brp-strip-comment-note, brp-strip-lto,

@@ -12,9 +12,19 @@
 #     equivalent is options=(!strip))
 # The version source is the AUR package itself (the AUR RPC API) — the AUR
 # maintainer tracks upstream; there is still no first-party version feed.
+# The bundled libraries under /opt/TickTick carry SONAMEs, so the dependency
+# generator would advertise them as system providers. This repo is consumed at
+# priority=1, so those Provides would shadow Fedora's own packages in any
+# dependency resolution; they are private to the bundle.
+# The Requires on the bundled Chromium libs nothing in Fedora provides are
+# dropped as well. Brackets, not backslashes, escape regex metacharacters:
+# rpm consumes backslashes while expanding the macro.
+%global __provides_exclude_from ^/opt/TickTick/
+%global __requires_exclude ^libffmpeg[.]so|^libvulkan[.]so[.]1|^libEGL[.]so|^libGLESv2[.]so|^libvk_swiftshader[.]so
+
 Name:           ticktick
 Version:        8.0.20
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Official desktop application for Linux
 License:        LicenseRef-Proprietary
 URL:            https://ticktick.com/download
@@ -92,6 +102,11 @@ chmod 4755 %{buildroot}/opt/TickTick/chrome-sandbox
 %{_licensedir}/ticktick/
 
 %changelog
+* Tue Oct 27 2026 halcyon-linux <aahsnr041@proton.me> - 8.0.20-2
+- Stop advertising the bundled libraries as system Provides (__provides_exclude_from): with the
+  repo at priority=1 they shadowed Fedora's packages and were pulled into unrelated installs;
+  drop the matching Requires on the bundled Chromium libs
+
 * Tue Sep 22 2026 halcyon-autobuild - 8.0.11-1
 - follow the AUR PKGBUILD: vendor .deb payload (desktop file + icons now
   included), /usr/bin/ticktick launcher with user-flags support, Electron/

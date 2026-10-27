@@ -355,7 +355,7 @@ def custom_claude_desktop(spec: SpecFile, pkg_dir: Path) -> None:
     )
 
 
-def custom_chatgpt_desktop(spec: SpecFile, pkg_dir: Path) -> None:
+def custom_chatgpt(spec: SpecFile, pkg_dir: Path) -> None:
     # OpenAI serves the ChatGPT desktop RPMs from a real yum repository at
     # persistent.oaistatic.com/codex-app-prod/linux/rpm/x86_64 — the primary
     # metadata is the first-party source of the version, of the upstream
@@ -376,7 +376,7 @@ def custom_chatgpt_desktop(spec: SpecFile, pkg_dir: Path) -> None:
             return ET.fromstring(payload)
         except ET.ParseError as exc:
             raise feeds.FeedError(
-                f"chatgpt-desktop: malformed {what}: {exc}") from exc
+                f"chatgpt: malformed {what}: {exc}") from exc
 
     repo = "https://persistent.oaistatic.com/codex-app-prod/linux/rpm/x86_64/"
     repomd = _xml(feeds.fetch_text(repo + "repodata/repomd.xml"), "repomd.xml")
@@ -389,14 +389,14 @@ def custom_chatgpt_desktop(spec: SpecFile, pkg_dir: Path) -> None:
                 primary_href = loc.get("href", "")
             break
     if not primary_href:
-        raise feeds.FeedError("chatgpt-desktop: repodata carries no primary index")
+        raise feeds.FeedError("chatgpt: repodata carries no primary index")
 
     common_ns = "{http://linux.duke.edu/metadata/common}"
     try:
         primary = gzip.decompress(feeds.fetch_bytes(repo + primary_href))
     except (EOFError, OSError, zlib.error) as exc:
         raise feeds.FeedError(
-            f"chatgpt-desktop: cannot decompress {primary_href}: {exc}") from exc
+            f"chatgpt: cannot decompress {primary_href}: {exc}") from exc
     candidates = []
     for pkg in _xml(primary, primary_href).iter(f"{common_ns}package"):
         if pkg.findtext(f"{common_ns}name") != "chatgpt":
@@ -418,7 +418,7 @@ def custom_chatgpt_desktop(spec: SpecFile, pkg_dir: Path) -> None:
                            loc.get("href", "")))
     if not candidates:
         raise feeds.FeedError(
-            f"chatgpt-desktop: no x86_64 chatgpt stanza with a sha256 in "
+            f"chatgpt: no x86_64 chatgpt stanza with a sha256 in "
             f"{repo}{primary_href}")
 
     from functools import cmp_to_key
@@ -433,9 +433,9 @@ def custom_chatgpt_desktop(spec: SpecFile, pkg_dir: Path) -> None:
     expected = f"chatgpt-{version}-{rel}.x86_64.rpm"
     if href != expected:
         raise feeds.FeedError(
-            f"chatgpt-desktop: pool filename {href!r} does not match {expected!r}")
+            f"chatgpt: pool filename {href!r} does not match {expected!r}")
     if not feeds.head_probe(repo + href):
-        raise feeds.FeedError(f"chatgpt-desktop: RPM not published at {repo}{href}")
+        raise feeds.FeedError(f"chatgpt: RPM not published at {repo}{href}")
     spec.set_version(version)
     spec.set_global("upstream_rel", rel)
     spec.set_global("digest", digest)

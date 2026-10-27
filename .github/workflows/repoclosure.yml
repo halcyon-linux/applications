@@ -185,6 +185,36 @@ jobs:
             fi
           done
           exit $rc
+      - name: Soname guard (no bundled-library Provides, no 32-bit Requires)
+        # Same reason as the scope guard, one level down: closure cannot see
+        # that a package SHADOWS Fedora by capability. A vendor bundle that
+        # leaks its private libs as Provides (libstdc++.so.6, libcrypto.so.3,
+        # libvulkan.so.1, ...) wins every dependency pick over Fedora's real
+        # package at priority=1 and drags the whole app into unrelated
+        # installs; a stray 32-bit/foreign ELF in a bundle adds bare
+        # (non-64bit) soname Requires and drags i686 glibc in. Each package's
+        # newest build is judged; nothing here should advertise a .so.
+        if: ${{ !cancelled() && steps.dropin.outcome == 'success' }}
+        run: |
+          set -eu
+          repo="copr:copr.fedorainfracloud.org:aahsnr-work:applications"
+          rc=0
+          for rv in 44 45; do
+            q() { dnf -q --releasever=$rv repoquery --repoid="$repo" --arch x86_64,noarch --latest-limit=1 "$@"; }
+            for name in $(q --qf '%{name}\n' | sort -u); do
+              prov="$(q --provides "$name" | grep -E '[.]so' | sort -u || true)"
+              if [ -n "$prov" ]; then
+                echo "::error::fc$rv: $name advertises library Provides (add __provides_exclude_from): $(printf '%s\n' "$prov" | head -3 | paste -sd' ' -) ..."
+                rc=1
+              fi
+              bare="$(q --requires "$name" | grep -E '[.]so' | grep -v '(64bit)' | sort -u || true)"
+              if [ -n "$bare" ]; then
+                echo "::error::fc$rv: $name requires 32-bit sonames (foreign ELF in the bundle?): $(printf '%s\n' "$bare" | head -3 | paste -sd' ' -) ..."
+                rc=1
+              fi
+            done
+          done
+          exit $rc
       - name: Repoclosure (newest, then newest+best; regenerate-and-retry on failure)
         # the scope guard must not hide a real dependency break: run the
         # closure check whenever the drop-in installed, hygiene or not, so

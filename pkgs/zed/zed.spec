@@ -9,9 +9,15 @@
 %global _build_id_links none
 %global             __os_install_post %{nil}
 
+# The bundled libraries under %%{_libdir}/zed.app carry SONAMEs, so the dependency
+# generator would advertise them as system providers. This repo is consumed at
+# priority=1, so those Provides would shadow Fedora's own packages in any
+# dependency resolution; they are private to the bundle.
+%global __provides_exclude_from ^%{_libdir}/zed[.]app/
+
 Name:               zed
 Version:            1.25.3
-Release:            1%{?dist}
+Release:            2%{?dist}
 Summary:            A high-performance, multiplayer code editor
 License:            Apache-2.0 AND GPL-3.0-or-later
 URL:                https://zed.dev
@@ -63,6 +69,10 @@ ln -s %{_libdir}/zed.app/bin/zed %{buildroot}%{_bindir}/zed
 %{_licensedir}/zed/
 
 %changelog
+* Tue Oct 27 2026 halcyon-linux <aahsnr041@proton.me> - 1.25.3-2
+- Stop advertising the bundled libraries as system Provides (__provides_exclude_from): with the
+  repo at priority=1 they shadowed Fedora's packages and were pulled into unrelated installs
+
 * Mon Sep 28 2026 ahsan <aahsnr041@proton.me> - 1.21.0-1
 - initial package (vendor rewrap of the self-contained release tarball,
   shape per obsidian.spec)

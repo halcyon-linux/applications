@@ -143,15 +143,15 @@ batch = 0
 feed = "custom"
 custom = "claude-science"
 
-# chatgpt-desktop: vendor rewrap of OpenAI's official RPM, the AUR
-# chatgpt-desktop packaging; the upstream yum repodata supplies the version,
-# the upstream release number and the sha256.
-[chatgpt-desktop]
+# chatgpt: vendor rewrap of OpenAI's official RPM (same name as upstream);
+# the upstream yum repodata supplies the version, the upstream release
+# number and the sha256.
+[chatgpt]
 batch = 0
 
-[chatgpt-desktop.updates]
+[chatgpt.updates]
 feed = "custom"
-custom = "chatgpt-desktop"
+custom = "chatgpt"
 
 # ferdium: vendor RPM rewrap on the ticktick pattern; tags and releases
 # are 1:1 on ferdium-app.
