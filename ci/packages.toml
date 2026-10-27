@@ -190,6 +190,25 @@ batch = 0
 feed = "github-release"
 repo = "ranfdev/DistroShelf"
 
+# jupyterlab-desktop: vendor rewrap of the official Fedora RPM from
+# jupyterlab/jupyterlab-desktop GitHub releases. Tag format vX.Y.Z-N;
+# sweep extracts X.Y.Z as Version, pins full tag in %global upstream_tag.
+[jupyterlab-desktop]
+batch = 0
+
+[jupyterlab-desktop.updates]
+feed = "custom"
+custom = "jupyterlab_desktop"
+
+# appflowy: vendor rewrap of the official RPM from AppFlowy-IO/AppFlowy
+# GitHub releases; tag is the version (e.g. 0.14.11), RPM filename embeds it.
+[appflowy]
+batch = 0
+
+[appflowy.updates]
+feed = "github-release"
+repo = "AppFlowy-IO/AppFlowy"
+
 # ------------------------------------------------------------------ tools
 # onlyoffice-desktopeditors: heavy vendor rewrap of ONLYOFFICE's el7-built
 # suite (bundled Qt5/CEF/ICU under /opt/onlyoffice).

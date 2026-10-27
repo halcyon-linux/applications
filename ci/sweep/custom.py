@@ -504,3 +504,40 @@ def custom_claude_science(spec: SpecFile, pkg_dir: Path) -> None:
             f"claude-science: versioned URL not published: {versioned}")
     spec.set_version(version)
     spec.set_global("md5", md5)
+
+
+def custom_jupyterlab_desktop(spec: SpecFile, pkg_dir: Path) -> None:
+    # JupyterLab Desktop tags are vX.Y.Z-N (e.g. v4.6.3-1). The sweep
+    # extracts X.Y.Z as Version and pins the full tag in %global upstream_tag
+    # for the Source URL. The Fedora RPM asset name is constant
+    # (JupyterLab-Setup-Fedora-x64.rpm), so the tag is required for the
+    # download URL. The asset's sha256 digest is pinned when available.
+    releases = feeds.fetch_json(
+        "https://api.github.com/repos/jupyterlab/jupyterlab-desktop/releases?per_page=30"
+    )
+    for release in releases:
+        if release.get("draft") or release.get("prerelease"):
+            continue
+        tag = release.get("tag_name", "")
+        # tag format: vX.Y.Z-N
+        m = re.fullmatch(r"v([0-9][0-9.]*)-([1-9][0-9]*)", tag)
+        if not m:
+            continue
+        version = m.group(1)
+        # Find the Fedora RPM asset
+        asset_name = "JupyterLab-Setup-Fedora-x64.rpm"
+        for asset in release.get("assets", []):
+            if asset.get("name") != asset_name:
+                continue
+            digest = asset.get("digest") or ""
+            if digest.startswith("sha256:"):
+                digest = digest[len("sha256:"):]
+            else:
+                digest = "none"
+            spec.set_version(version)
+            spec.set_global("upstream_tag", tag)
+            spec.set_global("digest", digest)
+            return
+    raise feeds.FeedError(
+        "jupyterlab-desktop: no release in the last 30 ships "
+        "JupyterLab-Setup-Fedora-x64.rpm")
