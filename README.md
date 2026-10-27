@@ -25,6 +25,40 @@ applications · fonts · texlive-packages · linux-p03.
   the published Copr repo against Fedora 44/45 (+ Terra and the
   lionheartp bootstrap repo).
 
+## Running and cancelling workflows
+
+### Run a workflow manually
+
+In the GitHub UI: **Actions** → the workflow → **Run workflow** → branch `main` →
+fill the inputs → **Run workflow**. From the CLI:
+
+```bash
+gh workflow run <file> -R halcyon-linux/applications --ref main -f <input>=<value>
+```
+
+Inputs (leave empty for the default):
+
+- `copr-build.yml` — `only`: space-separated packages to build (empty = all), e.g. `-f only="<pkg> <pkg>"`. Bypasses the `CASCADE_ENABLED` gate.
+- `update.yml` — `mode`: `commit` or `pr`; `pkg`: space-separated packages to sweep (empty = all).
+- `repoclosure.yml`, `builder-docker.yml` — no inputs.
+
+### Force-cancel a workflow run
+
+1. Find the run ID: `gh run list -R halcyon-linux/applications --workflow <file>`.
+2. Cancel it: `gh run cancel <run-id> -R halcyon-linux/applications`, or **Cancel workflow**
+   on the run page.
+3. If it stays in *Cancelling* because a job or runner is hung, use **Force cancel**
+   on the run page, or:
+
+   ```bash
+   gh api -X POST repos/halcyon-linux/applications/actions/runs/<run-id>/force-cancel
+   ```
+
+A force cancel ends the run without waiting for its jobs. It does not stop Copr
+builds that were already submitted; cancel those on the Copr project page.
+
+**Caution:** if a `update.yml` run is cancelled after it has pushed a bump, that bump can be left without a `copr-build` run. Dispatch `copr-build.yml` with `only` set to the bumped packages.
+
 ## Layout
 
 ```
