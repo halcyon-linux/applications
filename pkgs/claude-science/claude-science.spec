@@ -26,10 +26,10 @@
 # Upstream publishes no sha256 for the release; the download endpoint carries
 # an MD5 in its x-goog-hash header. The sweep pins that here; 'none' skips
 # the check.
-%global md5 03d9b45237913ac7ec476d027d5004f7
+%global md5 74a4299c71dba65595ff51f59493b5b9
 
 Name:           claude-science
-Version:        0.1.70
+Version:        0.1.71
 Release:        1%{?dist}
 Summary:        Anthropic's local research agent (beta)
 License:        LicenseRef-Proprietary

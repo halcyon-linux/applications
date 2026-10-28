@@ -56,14 +56,14 @@
 %global __requires_exclude ^libffmpeg[.]so|^libvulkan[.]so[.]1|^libEGL[.]so|^libGLESv2[.]so|^libvk_swiftshader[.]so|^libvips-cpp[.]so
 
 # Pinned by the sweep from the upstream repodata; 'none' skips the check.
-%global digest d5069043701a12760cce0447f7688859e9988dfbb04daaa9be0be0b762ff895f
+%global digest dfc857b549c68a90900ef7eebae93a1d89c09c7cb634dd260b2b17c0bd3ee562
 
 # the upstream RPM's own release number, kept in sync by the sweep (it is
 # part of the pool filename, not of our package NVR)
 %global upstream_rel 1
 
 Name:           chatgpt
-Version:        26.1021.22027
+Version:        26.1023.51421
 Release:        1%{?dist}
 Summary:        ChatGPT by OpenAI — official Linux desktop app
 License:        LicenseRef-Proprietary
