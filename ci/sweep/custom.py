@@ -119,32 +119,6 @@ def custom_obsidian(spec: SpecFile, pkg_dir: Path) -> None:
     )
 
 
-def custom_opencode_desktop(spec: SpecFile, pkg_dir: Path) -> None:
-    # the desktop app ships through opencode.ai's own stable download
-    # endpoint, which 302s to the versioned RPM; the version is read off the
-    # redirect target (no first-party release feed)
-    import urllib.error
-    import urllib.request
-
-    class _NoRedirect(urllib.request.HTTPRedirectHandler):
-        def redirect_request(self, req, fp, code, msg, headers, newurl):
-            return None
-
-    req = urllib.request.Request(
-        "https://opencode.ai/download/stable/linux-x64-rpm",
-        headers={"User-Agent": "halcyon-packages-sweeper"},
-    )
-    feeds.validate_url(req.full_url)
-    try:
-        urllib.request.build_opener(_NoRedirect).open(req, timeout=60)
-    except urllib.error.HTTPError as exc:
-        location = exc.headers.get("Location", "")
-    else:
-        raise feeds.FeedError(
-            "opencode-desktop: the stable endpoint did not redirect")
-    spec.set_version(feeds.find_group(r"/files/bin/([0-9.]+)/", location))
-
-
 def custom_ticktick(spec: SpecFile, pkg_dir: Path) -> None:
     # TickTick publishes no first-party version feed, but the AUR package
     # tracks it: the AUR maintainer bumps pkgver on every upstream release.

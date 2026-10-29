@@ -108,13 +108,6 @@ batch = 0
 feed = "custom"
 custom = "obsidian"
 
-[opencode-desktop]
-batch = 0
-
-[opencode-desktop.updates]
-feed = "custom"
-custom = "opencode_desktop"
-
 # claude-desktop: vendor rewrap of Anthropic's official .deb; the apt
 # Packages index supplies both the version and the sha256.
 [claude-desktop]

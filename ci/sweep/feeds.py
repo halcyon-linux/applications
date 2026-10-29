@@ -29,7 +29,6 @@ ALLOWED_HOSTS = frozenset({
     "downloads.claude.ai",
     "ftp.gnu.org",
     "mullvad.net",
-    "opencode.ai",
     "persistent.oaistatic.com",
     "repo.protonvpn.com",
 })
