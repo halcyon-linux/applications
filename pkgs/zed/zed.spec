@@ -16,8 +16,8 @@
 %global __provides_exclude_from ^%{_libdir}/zed[.]app/
 
 Name:               zed
-Version:            1.25.3
-Release:            2%{?dist}
+Version:            1.26.2
+Release:            1%{?dist}
 Summary:            A high-performance, multiplayer code editor
 License:            Apache-2.0 AND GPL-3.0-or-later
 URL:                https://zed.dev
