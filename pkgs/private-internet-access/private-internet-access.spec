@@ -36,8 +36,8 @@
 
 Name:               private-internet-access
 Version:            3.8.0
-Release:            3%{?dist}
-Summary:            Private Internet Access VPN client (official installer rewrap)
+Release:            4%{?dist}
+Summary:            Private Internet Access VPN client (official installer repackaged)
 License:            LicenseRef-PIA
 URL:                https://www.privateinternetaccess.com
 #!RemoteAsset
@@ -56,19 +56,20 @@ BuildRequires:      systemd-rpm-macros
 Requires:           systemd
 Requires:           iproute
 Requires:           iptables
-Requires:           libcap
+Requires:           /usr/sbin/setcap
 # runtime dependencies the official installer's installDependencies() pulls
-# in on Fedora (libxkbcommon-x11, libnl3, libnsl, iptables, psmisc, libatomic,
-# xterm — the client opens terminals through xterm)
-Requires:           libxkbcommon-x11
-Requires:           libnl3
-Requires:           libnsl2
+# in on Fedora. Sonames where the binaries load them (the daemon dlopen()s
+# libnl; the rest are auto-generated), packages where nothing is linked:
+# psmisc (killall) and xterm (the client opens terminals through it)
+Requires:           libnl-3.so.200()(64bit)
+Requires:           libnl-route-3.so.200()(64bit)
+Requires:           libnl-genl-3.so.200()(64bit)
+Requires:           libatomic.so.1()(64bit)
 Requires:           psmisc
-Requires:           libatomic
 Requires:           xterm
 
 %description
-Private Internet Access VPN client, repacked from upstream's official
+Private Internet Access VPN client, repacked from the official
 self-contained installer. Ships the Qt GUI, the root daemon
 (piavpn.service) and piactl on PATH; the app lives under /opt/piavpn.
 
@@ -159,6 +160,12 @@ setcap cap_net_bind_service=ep /opt/piavpn/bin/pia-unbound || :
 /opt/piavpn/
 
 %changelog
+* Thu Oct 29 2026 halcyon-linux <aahsnr041@proton.me> - 3.8.0-4
+- Replace explicit library-package Requires with the sonames and paths they satisfy (rpmlint
+  explicit-lib-dependency); libxkbcommon-x11 and libnsl are auto-required and dropped; the
+  daemon's dlopen()ed libnl is required by soname; setcap by path
+- Spelling fixes in the summary and description
+
 * Thu Oct 29 2026 halcyon-linux <aahsnr041@proton.me> - 3.8.0-3
 - Fix a client that opens but does nothing (tray menu only offers Quit): the daemon was never
   running. Ship a preset enabling piavpn.service, create the piavpn/piahnsd groups via sysusers,
