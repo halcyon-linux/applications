@@ -36,7 +36,7 @@
 
 Name:               private-internet-access
 Version:            3.8.0
-Release:            2%{?dist}
+Release:            3%{?dist}
 Summary:            Private Internet Access VPN client (official installer rewrap)
 License:            LicenseRef-PIA
 URL:                https://www.privateinternetaccess.com
@@ -52,10 +52,20 @@ Source3:            debug.txt
 ExclusiveArch:      x86_64
 
 BuildRequires:      systemd-rpm-macros
+%{?sysusers_requires_compat}
 Requires:           systemd
 Requires:           iproute
 Requires:           iptables
 Requires:           libcap
+# runtime dependencies the official installer's installDependencies() pulls
+# in on Fedora (libxkbcommon-x11, libnl3, libnsl, iptables, psmisc, libatomic,
+# xterm — the client opens terminals through xterm)
+Requires:           libxkbcommon-x11
+Requires:           libnl3
+Requires:           libnsl2
+Requires:           psmisc
+Requires:           libatomic
+Requires:           xterm
 
 %description
 Private Internet Access VPN client, repacked from upstream's official
@@ -88,6 +98,22 @@ install -Dm755 extract/installfiles/run-in-terminal.sh \
 # log-volume limiter (AUR): /opt/piavpn/var/debug.txt
 install -Dm644 %{SOURCE3} %{buildroot}/opt/piavpn/var/debug.txt
 
+# the daemon's access groups (installer: addGroups piavpn piahnsd) — without
+# piavpn the client cannot talk to the daemon and does nothing
+install -Dm644 /dev/stdin %{buildroot}%{_sysusersdir}/piavpn.conf <<'EOF2'
+g piavpn -
+g piahnsd -
+EOF2
+
+# Fedora's default preset disables new services; the installer enables and
+# starts piavpn, and the client is useless without its daemon
+install -Dm644 /dev/stdin %{buildroot}%{_presetdir}/50-piavpn.preset <<'EOF2'
+enable piavpn.service
+EOF2
+
+# daemon settings dir (installer's daemonSettingsPath)
+install -dm755 %{buildroot}/opt/piavpn/etc
+
 # systemd unit, desktop entry, icon, piactl on PATH
 install -Dm644 %{SOURCE1} %{buildroot}%{_unitdir}/piavpn.service
 install -Dm644 extract/installfiles/piavpn.desktop \
@@ -106,6 +132,9 @@ install -Dm644 %{SOURCE2} \
 install -Dm644 extract/piafiles/share/LICENSE.txt \
     %{buildroot}%{_licensedir}/%{name}/LICENSE
 
+%pre
+%sysusers_create_compat %{_sysusersdir}/piavpn.conf
+
 %post
 %systemd_post piavpn.service
 # the installer's own step: pia-unbound binds low ports for DNS
@@ -120,6 +149,8 @@ setcap cap_net_bind_service=ep /opt/piavpn/bin/pia-unbound || :
 %files
 %license %{_licensedir}/%{name}/LICENSE
 %{_unitdir}/piavpn.service
+%{_presetdir}/50-piavpn.preset
+%{_sysusersdir}/piavpn.conf
 %{_bindir}/piactl
 %{_datadir}/applications/piavpn.desktop
 %{_datadir}/pixmaps/piavpn.png
@@ -128,6 +159,12 @@ setcap cap_net_bind_service=ep /opt/piavpn/bin/pia-unbound || :
 /opt/piavpn/
 
 %changelog
+* Thu Oct 29 2026 halcyon-linux <aahsnr041@proton.me> - 3.8.0-3
+- Fix a client that opens but does nothing (tray menu only offers Quit): the daemon was never
+  running. Ship a preset enabling piavpn.service, create the piavpn/piahnsd groups via sysusers,
+  ship /opt/piavpn/etc, and require the runtime deps the official installer installs
+  (libxkbcommon-x11, libnl3, libnsl2, psmisc, libatomic, xterm)
+
 * Tue Oct 27 2026 halcyon-linux <aahsnr041@proton.me> - 3.8.0-2
 - Stop advertising the bundled libraries as system Provides (__provides_exclude_from): with the
   repo at priority=1 they shadowed Fedora's packages (libcrypto.so.3, ICU, Qt6, xcb) and were
