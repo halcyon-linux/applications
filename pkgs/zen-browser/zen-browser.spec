@@ -19,8 +19,8 @@
 %global __requires_exclude ^(libclearkey|libfreeblpriv3|libgkcodecs|liblgpllibs|libmoz[a-z0-9]+|libnspr4|libnss3|libnssutil3|libonnxruntime|libplc4|libplds4|libsmime3|libsoftokn3|libssl3|libxul)[.]so
 
 Name:               zen-browser
-Version:            1.23.4b
-Release:            2%{?dist}
+Version:            1.24b
+Release:            1%{?dist}
 Summary:            Zen Browser — a Firefox-based browser focused on privacy and customization
 License:            MPL-2.0
 URL:                https://zen-browser.app

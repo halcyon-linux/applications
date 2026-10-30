@@ -47,10 +47,10 @@
 %global __requires_exclude ^libffmpeg[.]so|^libvulkan[.]so[.]1|^libvk_swiftshader[.]so
 
 # Pinned by the sweep from the apt Packages index; 'none' skips the check.
-%global digest 4aa0f763d6c05ac79502392dd50f5d7f5c455b2f0a405d5bdf1554acd8342a89
+%global digest 4fcf658e0fc895390ab82593287281dfbce261b0ec3ea90060e82d8bfbfd7a84
 
 Name:           claude-desktop
-Version:        4.29.0
+Version:        4.4212.0
 Release:        1%{?dist}
 Summary:        Official Claude AI desktop app — Chat, Cowork, and Claude Code
 License:        LicenseRef-Proprietary
