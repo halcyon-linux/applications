@@ -44,10 +44,10 @@
 # extra_rel is the release number after the dash. The sweep pins both it and
 # the RPM sha256 from the GitHub release asset digest.
 %global extra_rel 2
-%global digest d9821bdb53585232835f2d4fc78597128f09aba0a28b208e15780374a0d0d371
+%global digest 9e8ea66fe512fde7a974a77939d24094f738303769484c73e486f3155405b06e
 
 Name:           claude-desktop-extra
-Version:        4.29.0
+Version:        4.4212.0
 Release:        1%{?dist}
 Summary:        Claude Desktop with Computer Use, themes, multi-profile and Quick Entry
 License:        LicenseRef-Proprietary
