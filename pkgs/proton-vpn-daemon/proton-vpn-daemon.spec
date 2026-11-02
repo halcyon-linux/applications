@@ -17,7 +17,7 @@
 %global _build_id_links none
 %global             __os_install_post %{nil}
 Name:               proton-vpn-daemon
-Version:            0.13.8
+Version:            0.14.1
 Release:            1%{?dist}
 Summary:            Proton VPN root daemon (split tunneling D-Bus service)
 License:            GPL-3.0-or-later
