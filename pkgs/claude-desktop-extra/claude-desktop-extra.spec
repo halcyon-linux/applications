@@ -43,12 +43,12 @@
 # Upstream releases re-use a base version for several builds (v3.6556.2-7);
 # extra_rel is the release number after the dash. The sweep pins both it and
 # the RPM sha256 from the GitHub release asset digest.
-%global extra_rel 2
-%global digest 9e8ea66fe512fde7a974a77939d24094f738303769484c73e486f3155405b06e
+%global extra_rel 4
+%global digest f46b690bcf844d28f24d7e3512081e7e32013597d78c1c5c720601e15265c7fd
 
 Name:           claude-desktop-extra
 Version:        4.4212.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Claude Desktop with Computer Use, themes, multi-profile and Quick Entry
 License:        LicenseRef-Proprietary
 URL:            https://github.com/patrickjaja/claude-desktop-extra

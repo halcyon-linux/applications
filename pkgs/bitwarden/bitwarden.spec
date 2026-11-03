@@ -56,10 +56,10 @@
 # upstream tags pre-releases with '-' (desktop-v2026.9.1-beta.1), which RPM
 # Version forbids — the sweep carries the raw tag in upstream_version (both
 # Source URLs need it) and stores the tilde form in Version.
-%global          upstream_version 2026.10.2
+%global          upstream_version 2026.10.3
 
 Name:           bitwarden
-Version:	2026.10.2
+Version:	2026.10.3
 Release:        1%{?dist}
 Summary:        A secure and free password manager for all of your devices
 License:        GPL-3.0-only
