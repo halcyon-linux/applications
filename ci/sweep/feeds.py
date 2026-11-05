@@ -25,6 +25,7 @@ GITHUB_API = "https://api.github.com"
 ALLOWED_HOSTS = frozenset({
     "api.github.com",
     "aur.archlinux.org",
+    "cdn-zcode.z.ai",
     "download.zotero.org",
     "downloads.claude.ai",
     "ftp.gnu.org",
@@ -244,5 +245,4 @@ def github_latest_tag(repo: str) -> str:
         if not best or rpmvercmp(stripped, best) > 0:
             best = stripped
     return best
-
 

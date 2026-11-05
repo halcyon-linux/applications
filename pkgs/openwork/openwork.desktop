@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=OpenWork
+Comment=Open-source AI agent desktop workspace
+Exec=openwork %U
+Icon=openwork
+Type=Application
+Categories=Development;IDE;
+Terminal=false
+StartupWMClass=OpenWork
+MimeType=x-scheme-handler/openwork;

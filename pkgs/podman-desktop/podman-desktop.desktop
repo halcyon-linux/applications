@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Podman Desktop
+Comment=Graphical interface for containers and Kubernetes
+Exec=podman-desktop %U
+Icon=podman-desktop
+Type=Application
+Categories=Development;System;
+Terminal=false
+StartupWMClass=podman-desktop

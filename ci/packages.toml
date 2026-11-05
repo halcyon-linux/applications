@@ -26,6 +26,32 @@
 # --------------------------------------------------------------- desktops
 
 # --- batch 0 ------------------------------------------------------------
+# openwork and podman-desktop rewrap their official Linux x64 Electron
+# tarballs. Custom feeds select stable releases with matching assets and pin
+# GitHub's published SHA256 digest.
+[openwork]
+batch = 0
+
+[openwork.updates]
+feed = "custom"
+custom = "openwork"
+
+[podman-desktop]
+batch = 0
+
+[podman-desktop.updates]
+feed = "custom"
+custom = "podman-desktop"
+
+# zcode rewraps Z.ai's official Linux x64 RPM. Its GitHub release tag may
+# precede CDN publication, so the custom feed probes the versioned RPM URL.
+[zcode]
+batch = 0
+
+[zcode.updates]
+feed = "custom"
+custom = "zcode"
+
 [kitty]
 batch = 0
 
@@ -230,6 +256,15 @@ batch = 0
 [mullvad-vpn.updates]
 feed = "custom"
 custom = "mullvad-vpn"
+
+# Windscribe's stable Fedora x86_64 GUI RPM is rewrapped from its GitHub
+# release asset; the custom feed pins the published SHA-256 digest.
+[windscribe]
+batch = 0
+
+[windscribe.updates]
+feed = "custom"
+custom = "windscribe"
 
 # Proton chain: the GUI app + the root daemon and the python components it
 # resolves through, all rewrapped from Proton's official Fedora RPMs.

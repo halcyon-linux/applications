@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=ZCode
+Comment=AI-assisted development environment
+Exec=zcode %U
+Icon=zcode
+Type=Application
+Categories=Development;IDE;
+Terminal=false
+StartupWMClass=zcode
+MimeType=x-scheme-handler/zcode;

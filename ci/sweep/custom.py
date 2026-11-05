@@ -213,6 +213,31 @@ def custom_mullvad_vpn(spec: SpecFile, pkg_dir: Path) -> None:
     spec.set_version(feeds.find_group(r"MullvadVPN-([0-9.]+)_x86_64\.rpm", html))
 
 
+def custom_windscribe(spec: SpecFile, pkg_dir: Path) -> None:
+    # The GitHub releases include beta builds. Select the newest stable release
+    # that publishes Windscribe's Fedora x86_64 GUI RPM, and pin its digest.
+    releases = feeds.fetch_json(
+        f"{feeds.GITHUB_API}/repos/Windscribe/Desktop-App/releases?per_page=100")
+    for release in releases:
+        if release.get("draft") or release.get("prerelease"):
+            continue
+        version = release.get("tag_name", "").removeprefix("v")
+        if not re.fullmatch(r"[0-9]+(?:\.[0-9]+)+", version):
+            continue
+        expected_name = f"windscribe_{version}_amd64_fedora.rpm"
+        for asset in release.get("assets", []):
+            if asset.get("name") != expected_name:
+                continue
+            digest = asset.get("digest", "")
+            if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+                raise feeds.FeedError(
+                    f"windscribe: missing SHA-256 digest for {expected_name}")
+            spec.set_version(version)
+            spec.set_global("digest", digest.removeprefix("sha256:"))
+            return
+    raise feeds.FeedError("windscribe: no stable release carries a Fedora x86_64 GUI RPM")
+
+
 def _proton_rpm_version(ghrepo: str, rpm_name: str, srcarch: str, spec: SpecFile) -> None:
     # ProtonVPN/<ghrepo> tags newest-first, HEAD-probing the official
     # repo.protonvpn.com RPM URL so a tag whose RPM build has not landed yet
@@ -510,3 +535,61 @@ def custom_appflowy(spec: SpecFile, pkg_dir: Path) -> None:
     raise feeds.FeedError(
         "appflowy: no release in the last 30 ships AppFlowy-<ver>-linux-x86_64.rpm"
     )
+
+
+def _github_release_archive(spec: SpecFile, repo: str, asset_pattern: str,
+                            package: str) -> None:
+    """Pin newest stable release carrying the required Linux x64 archive."""
+    releases = feeds.fetch_json(
+        f"https://api.github.com/repos/{repo}/releases?per_page=30")
+    for release in releases:
+        if release.get("draft") or release.get("prerelease"):
+            continue
+        tag = release.get("tag_name", "")
+        version = tag.removeprefix("v")
+        if not re.fullmatch(r"[0-9][0-9.]*", version):
+            continue
+        for asset in release.get("assets", []):
+            if not re.fullmatch(asset_pattern.format(version=re.escape(version)),
+                                asset.get("name", "")):
+                continue
+            digest = asset.get("digest") or "none"
+            if digest.startswith("sha256:"):
+                digest = digest.removeprefix("sha256:")
+            if digest != "none" and not re.fullmatch(r"[0-9a-f]{64}", digest):
+                raise feeds.FeedError(
+                    f"{package}: invalid SHA256 {digest!r} for {asset['name']}")
+            spec.set_version(version)
+            if spec.get_global("digest") is not None:
+                spec.set_global("digest", digest)
+            return
+    raise feeds.FeedError(
+        f"{package}: no stable release in the last 30 ships its x86_64 archive")
+
+
+def custom_openwork(spec: SpecFile, pkg_dir: Path) -> None:
+    # Follow public OpenWork releases, not cloud or enterprise artifacts.
+    _github_release_archive(
+        spec, "different-ai/openwork",
+        r"openwork-linux-x64-{version}\.tar\.gz", "openwork")
+
+
+def custom_podman_desktop(spec: SpecFile, pkg_dir: Path) -> None:
+    # Podman Desktop publishes its Linux x64 application as a release tarball.
+    _github_release_archive(
+        spec, "podman-desktop/podman-desktop",
+        r"podman-desktop-{version}-x64\.tar\.gz", "podman-desktop")
+
+
+def custom_zcode(spec: SpecFile, pkg_dir: Path) -> None:
+    # The app's tagged GitHub release can precede its CDN RPM; only bump after
+    # the official x64 RPM is reachable.
+    version = feeds.github_release_tag("zai-org/ZCode").removeprefix("v")
+    if not re.fullmatch(r"[0-9][0-9.]*", version):
+        raise feeds.FeedError(f"zcode: unexpected release tag {version!r}")
+    url = (
+        "https://cdn-zcode.z.ai/zcode/electron/releases/"
+        f"{version}/linux-x64/ZCode-{version}-linux-x64.rpm")
+    if not feeds.head_probe(url):
+        raise feeds.FeedError(f"zcode: official RPM is not published at {url}")
+    spec.set_version(version)
