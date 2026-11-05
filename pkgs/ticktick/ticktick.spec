@@ -23,8 +23,8 @@
 %global __requires_exclude ^libffmpeg[.]so|^libvulkan[.]so[.]1|^libEGL[.]so|^libGLESv2[.]so|^libvk_swiftshader[.]so
 
 Name:           ticktick
-Version:        8.0.20
-Release:        2%{?dist}
+Version:        8.0.30
+Release:        1%{?dist}
 Summary:        Official desktop application for Linux
 License:        LicenseRef-Proprietary
 URL:            https://ticktick.com/download
