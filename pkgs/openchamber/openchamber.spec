@@ -83,6 +83,9 @@ appstreamcli validate --no-net %{buildroot}%{_metainfodir}/openchamber.metainfo.
 %license %{_licensedir}/%{name}/LICENSE
 
 %changelog
+* Wed Nov 04 2026 halcyon-linux <aahsnr041@proton.me> - 2.6.1-1
+- Update to OpenChamber 2.6.1 (from ok8219/OpenChamber Copr)
+
 * Tue Oct 27 2026 halcyon-linux <aahsnr041@proton.me> - 2.5.2-5
 - Escape the __requires_exclude regex with brackets: rpm strips backslashes while
   expanding the macro, leaving a loose pattern (the bug that silently disabled
