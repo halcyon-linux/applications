@@ -117,16 +117,6 @@ batch = 0
 feed = "custom"
 custom = "claude-desktop"
 
-# claude-desktop-extra: rewrap of the community build's self-contained
-# x86_64 RPM; the GitHub release tag carries the base version and the
-# extra release number (v3.6556.2-7).
-[claude-desktop-extra]
-batch = 0
-
-[claude-desktop-extra.updates]
-feed = "custom"
-custom = "claude-desktop-extra"
-
 # claude-science: Anthropic's single-file linux-x64 release; the download
 # endpoint publishes no sha256, so the feed pins the header's MD5.
 [claude-science]

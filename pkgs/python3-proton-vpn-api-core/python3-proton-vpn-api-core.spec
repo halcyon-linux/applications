@@ -81,11 +81,13 @@ find %{buildroot} -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null || :
 %{python3_sitearch}/proton_vpn_api_core-*/
 %{_libexecdir}/nm-protun-service
 %{_libexecdir}/proton-vpn-kill-switch-service
+%{_libexecdir}/proton-vpn-disable-kill-switch
 %{_prefix}/lib/NetworkManager/VPN/nm-protun.name
 %{_unitdir}/proton-vpn-kill-switch-boot.service
 %{_datadir}/dbus-1/system-services/me.proton.vpn.kill_switch.service
 %{_datadir}/dbus-1/system.d/me.proton.vpn.kill_switch.conf
 %{_datadir}/dbus-1/system.d/nm-protun-service.conf
+%{_datadir}/polkit-1/actions/me.proton.vpn.kill-switch.disable.policy
 
 %changelog
 * Wed Sep 30 2026 halcyon-autoupdate <aahsnr041@proton.me> - 5.8.3-2

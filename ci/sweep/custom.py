@@ -415,38 +415,6 @@ def custom_chatgpt(spec: SpecFile, pkg_dir: Path) -> None:
     spec.set_global("digest", digest)
 
 
-def custom_claude_desktop_extra(spec: SpecFile, pkg_dir: Path) -> None:
-    # Upstream re-releases the same base version with a new release number
-    # (v3.6556.2-7); the tag and the x86_64 RPM asset carry both. The asset's
-    # GitHub digest is pinned for the prep check.
-    releases = feeds.fetch_json(
-        "https://api.github.com/repos/patrickjaja/claude-desktop-extra/"
-        "releases?per_page=30")
-    for release in releases:
-        if release.get("draft") or release.get("prerelease"):
-            continue
-        m = re.fullmatch(r"v([0-9][0-9.]*)-([1-9][0-9]*)",
-                         release.get("tag_name", ""))
-        if not m:
-            continue
-        version, rel = m.groups()
-        asset_name = f"claude-desktop-extra-{version}-{rel}.x86_64.rpm"
-        for asset in release.get("assets", []):
-            if asset.get("name") != asset_name:
-                continue
-            digest = asset.get("digest") or ""
-            if not digest.startswith("sha256:"):
-                raise feeds.FeedError(
-                    f"claude-desktop-extra: {asset_name} has no sha256 digest")
-            spec.set_version(version)
-            spec.set_global("extra_rel", rel)
-            spec.set_global("digest", digest[len("sha256:"):])
-            return
-    raise feeds.FeedError(
-        "claude-desktop-extra: no release in the last 30 ships "
-        "claude-desktop-extra-<version>-<rel>.x86_64.rpm")
-
-
 def custom_claude_science(spec: SpecFile, pkg_dir: Path) -> None:
     # Anthropic serves the latest build from a stable URL and publishes no
     # sha256. The version comes from the Content-Disposition filename and the
