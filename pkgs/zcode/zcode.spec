@@ -7,11 +7,12 @@
 %global _build_id_links none
 %global             __os_install_post %{nil}
 %global __provides_exclude_from ^/opt/ZCode/
-%global __requires_exclude ^libffmpeg[.]so|^libvulkan[.]so[.]1|^libvk_swiftshader[.]so
+%global __requires_exclude_from ^/opt/ZCode/
+%global __requires_exclude ^libffmpeg[.]so|^libvulkan[.]so[.]1|^libvk_swiftshader[.]so|^libvips-cpp[.]so
 
 Name:           zcode
 Version:        3.17.2
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Z.ai AI-assisted development environment
 License:        LicenseRef-ZCode
 URL:            https://zcode.z.ai/en
@@ -64,5 +65,8 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/zcode.desktop
 %{_datadir}/icons/hicolor/512x512/apps/zcode.png
 
 %changelog
+* Sat Nov 07 2026 halcyon-linux <aahsnr041@proton.me> - 3.17.2-2
+- Exclude private bundled requires
+
 * Fri Nov 06 2026 halcyon-linux <aahsnr041@proton.me> - 3.17.2-1
 - Initial package: rewrap the official ZCode Linux x64 RPM

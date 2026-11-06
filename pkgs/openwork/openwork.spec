@@ -7,11 +7,12 @@
 %global             __os_install_post %{nil}
 
 %global __provides_exclude_from ^%{_libdir}/openwork/
-%global __requires_exclude ^libffmpeg[.]so|^libvulkan[.]so[.]1|^libEGL[.]so|^libGLESv2[.]so|^libvk_swiftshader[.]so
+%global __requires_exclude_from ^%{_libdir}/openwork/
+%global __requires_exclude ^libffmpeg[.]so|^libvulkan[.]so[.]1|^libEGL[.]so|^libGLESv2[.]so|^libvk_swiftshader[.]so|^libc[.]musl|^ld-linux-aarch64
 
 Name:           openwork
 Version:        0.18.65
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Open-source AI agent desktop workspace
 License:        MIT
 URL:            https://openworklabs.com/
@@ -46,6 +47,7 @@ if [ "$actual" != '%{digest}' ]; then
     exit 1
 fi
 rm -f resources/app-update.yml
+find . -type f \( -name "*arm64*" -o -name "*aarch64*" \) -delete
 
 %install
 %__rm -rf %{buildroot}
@@ -70,5 +72,8 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/openwork.desktop
 %license %{_licensedir}/openwork/LICENSE
 
 %changelog
+* Sat Nov 07 2026 halcyon-linux <aahsnr041@proton.me> - 0.18.65-2
+- Exclude private bundled requires and prune foreign arch binaries
+
 * Fri Nov 06 2026 halcyon-linux <aahsnr041@proton.me> - 0.18.65-1
 - Initial package: rewrap the public OpenWork Linux x64 release
