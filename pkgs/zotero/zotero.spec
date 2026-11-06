@@ -41,7 +41,7 @@
 %global __requires_exclude ^(libclearkey|libfreeblpriv3|libgkcodecs|liblgpllibs|libmoz[a-z0-9]+|libnspr4|libnss3|libnssutil3|libplc4|libplds4|libsmime3|libsoftokn3|libssl3|libxul)[.]so
 
 Name:           zotero
-Version:        10.0.7
+Version:        10.0.8
 Release:        1%{?dist}
 Summary:        Collect, organize, cite, and share your research sources
 URL:            https://www.zotero.org/
