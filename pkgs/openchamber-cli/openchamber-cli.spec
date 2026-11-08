@@ -12,7 +12,7 @@
 %global node_version 24.22.1
 
 Name:           openchamber-cli
-Version:        2.6.1
+Version:        2.7.0
 Release:        1%{?dist}
 Summary:        OpenChamber Web Server and CLI
 License:        MIT
