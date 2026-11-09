@@ -110,6 +110,14 @@ jobs:
         run: |
           set -eu
           python3 ci/matrix.py --list
+          # Every batch level the registry uses needs its submitN/waitN pair:
+          # the manifest emits one wave per level, and a wave with no job would
+          # leave those packages silently unbuilt.
+          for b in $(python3 -c 'import tomllib; print(" ".join(sorted({str(v.get("batch", 0)) for v in tomllib.load(open("ci/packages.toml", "rb")).values()})))'); do
+            grep -q "^  submit$b:" .github/workflows/copr-build.yml \
+              && grep -q "^  wait$b:" .github/workflows/copr-build.yml \
+              || { echo "::error::batch $b has no submit$b/wait$b job pair in copr-build.yml"; exit 1; }
+          done
           # every package must carry a sweep feed, every custom feed must be
           # referenced, and every pkgs/ directory must be registered — an
           # unswept or untracked package is a silent update gap

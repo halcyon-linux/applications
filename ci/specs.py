@@ -236,12 +236,18 @@ def check_spec(path: Path) -> list[str]:
             )
 
     # ---- %prep must not download -----------------------------------------
-    prep = re.search(r"(?ms)^%prep\b(.*?)(?=^%[a-z])", text)
-    if prep and _NETWORK.search(prep.group(1)):
-        errors.append(
-            "%prep downloads something — the sources are fetched at "
-            "SRPM-build time (spectool), not in %prep"
-        )
+    # The body ends at the next SECTION, not at the next `%word`: every spec
+    # starts the body with a macro such as `%autosetup`, and treating that as
+    # the end scanned an empty block. preamble_end() knows the section set.
+    prep = re.search(r"(?m)^%prep\b", text)
+    if prep:
+        body = text[prep.end():]
+        body = body[: preamble_end(body)]
+        if _NETWORK.search(body):
+            errors.append(
+                "%prep downloads something — the sources are fetched at "
+                "SRPM-build time (spectool), not in %prep"
+            )
 
     # ---- forgeautosetup --------------------------------------------------
     if re.search(r"%forge(?:autosetup|meta)", text):

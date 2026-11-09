@@ -125,6 +125,13 @@ class CheckSpecTest(unittest.TestCase):
             "%autosetup -p1", "curl -O https://example.com/x.tar.gz")
         self.assertTrue(any("%prep downloads" in e for e in violations_of(text)))
 
+    def test_a_download_after_a_prep_macro_is_flagged(self):
+        # %autosetup is a macro, not the next section: the scan must not end
+        # there, or every real spec hides what follows it.
+        text = GOOD_SPEC.replace(
+            "%autosetup -p1", "%autosetup -p1\ncurl -O https://example.com/x.tar.gz")
+        self.assertTrue(any("%prep downloads" in e for e in violations_of(text)))
+
     def test_forgeautosetup_is_flagged(self):
         text = GOOD_SPEC.replace("%autosetup -p1", "%forgeautosetup")
         self.assertTrue(any("%forgeautosetup" in e for e in violations_of(text)))

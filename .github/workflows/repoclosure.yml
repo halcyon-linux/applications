@@ -56,6 +56,9 @@ on:
   workflow_run:
     workflows: [copr-build]
     types: [completed]
+    # copr-build's pull_request runs publish nothing; only a main-line
+    # cascade changes the repo this check samples.
+    branches: [main]
 
 permissions:
   contents: read

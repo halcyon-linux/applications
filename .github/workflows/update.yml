@@ -33,6 +33,10 @@ on:
   workflow_run:
     workflows: [copr-build]
     types: [completed]
+    # copr-build also runs on pull_request (validate only). Without this
+    # filter a green PR check would trigger a sweep that commits and pushes
+    # to main — a pull request must never land anything.
+    branches: [main]
   workflow_dispatch:
     inputs:
       mode:
