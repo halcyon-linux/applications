@@ -77,11 +77,11 @@ NODE=%{buildroot}%{_prefix}/lib/openchamber-web/runtime/node-v%{node_version}-li
 %license %{_datadir}/licenses/%{name}/LICENSE
 
 %changelog
-* Wed Nov 04 2026 halcyon-linux <aahsnr041@proton.me> - 2.6.1-1
-- Initial packaging of openchamber-cli (from ok8219/OpenChamber Copr)
-- Bundles Node.js 24.22.1
-
 * Mon Nov 09 2026 halcyon-linux <aahsnr041@proton.me> - 2.7.0-2
 - Pin the openchamber-web source sha256 in %%global digest swept from the
   GitHub release asset; switch the feed to custom so the digest stays in
   sync on every bump (the plain github-release feed never refreshes it).
+
+* Wed Nov 04 2026 halcyon-linux <aahsnr041@proton.me> - 2.6.1-1
+- Initial packaging of openchamber-cli (from ok8219/OpenChamber Copr)
+- Bundles Node.js 24.22.1
