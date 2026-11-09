@@ -10,10 +10,11 @@
 %global __requires_exclude_from ^/usr/lib/openchamber-web/node_modules/.*$
 %global __requires_exclude ^/usr/bin/(node|pwsh|python3)$
 %global node_version 24.22.1
+%global digest 4eff3cfb10c16a1c748afe420452f768e844f08075f2478c36f253ba4bd9e064
 
 Name:           openchamber-cli
 Version:        2.7.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        OpenChamber Web Server and CLI
 License:        MIT
 URL:            https://openchamber.dev/
@@ -32,7 +33,7 @@ and LAN server modes.
 
 %prep
 # Verify the openchamber-web tarball sha256 (pinned by the version sweep).
-echo "6edb084bbeb06974a4815b3ac73c93e8fa81887bc8ba6251df1a52fc9cf933ab  %{SOURCE0}" | sha256sum --check
+echo "%{digest} %{SOURCE0}" | sha256sum --check
 # Verify the Node.js tarball sha256 (pinned by the version sweep when node_version changes).
 echo "6c172a9ab6718f7b801fb5a7bd486af2ee5e32758086a04b84fcce2aa77095e6  %{SOURCE1}" | sha256sum --check
 mkdir -p package
@@ -79,3 +80,8 @@ NODE=%{buildroot}%{_prefix}/lib/openchamber-web/runtime/node-v%{node_version}-li
 * Wed Nov 04 2026 halcyon-linux <aahsnr041@proton.me> - 2.6.1-1
 - Initial packaging of openchamber-cli (from ok8219/OpenChamber Copr)
 - Bundles Node.js 24.22.1
+
+* Mon Nov 09 2026 halcyon-linux <aahsnr041@proton.me> - 2.7.0-2
+- Pin the openchamber-web source sha256 in %%global digest swept from the
+  GitHub release asset; switch the feed to custom so the digest stays in
+  sync on every bump (the plain github-release feed never refreshes it).

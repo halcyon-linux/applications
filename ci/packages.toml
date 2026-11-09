@@ -188,8 +188,8 @@ repo = "openchamber/openchamber"
 batch = 0
 
 [openchamber-cli.updates]
-feed = "github-release"
-repo = "openchamber/openchamber"
+feed = "custom"
+custom = "openchamber-cli"
 
 # antigravity-cli: Google's proprietary vendor payload; the download URL
 # embeds a per-release execution id Google exposes nowhere, so the sweep
