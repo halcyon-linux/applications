@@ -114,9 +114,11 @@ jobs:
           # the manifest emits one wave per level, and a wave with no job would
           # leave those packages silently unbuilt.
           for b in $(python3 -c 'import tomllib; print(" ".join(sorted({str(v.get("batch", 0)) for v in tomllib.load(open("ci/packages.toml", "rb")).values()})))'); do
-            grep -q "^  submit$b:" .github/workflows/copr-build.yml \
-              && grep -q "^  wait$b:" .github/workflows/copr-build.yml \
-              || { echo "::error::batch $b has no submit$b/wait$b job pair in copr-build.yml"; exit 1; }
+            if ! grep -q "^  submit$b:" .github/workflows/copr-build.yml \
+              || ! grep -q "^  wait$b:" .github/workflows/copr-build.yml; then
+              echo "::error::batch $b has no submit$b/wait$b job pair in copr-build.yml"
+              exit 1
+            fi
           done
           # every package must carry a sweep feed, every custom feed must be
           # referenced, and every pkgs/ directory must be registered — an
