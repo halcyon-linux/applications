@@ -171,6 +171,26 @@ batch = 0
 feed = "github-release"
 repo = "ferdium/ferdium-app"
 
+# openchamber: vendor rewrap of the official upstream RPM (Electron app);
+# the sweep tracks openchamber/openchamber GitHub releases.
+[openchamber]
+batch = 0
+
+[openchamber.updates]
+feed = "github-release"
+repo = "openchamber/openchamber"
+
+# openchamber-cli: OpenChamber Web Server and CLI; bundles Node.js runtime.
+# The sweep tracks openchamber/openchamber GitHub releases (same upstream).
+# The Node.js version (%global node_version) must be updated manually when
+# upstream changes its declared engine requirement.
+[openchamber-cli]
+batch = 0
+
+[openchamber-cli.updates]
+feed = "github-release"
+repo = "openchamber/openchamber"
+
 # antigravity-cli: Google's proprietary vendor payload; the download URL
 # embeds a per-release execution id Google exposes nowhere, so the sweep
 # reads the AUR maintainer's pins (RPC pkgver + the PKGBUILD's _build).
@@ -199,6 +219,16 @@ batch = 0
 [jupyterlab-desktop.updates]
 feed = "custom"
 custom = "jupyterlab_desktop"
+
+# appflowy: vendor rewrap of the official RPM from AppFlowy-IO/AppFlowy
+# GitHub releases; tag is the version (e.g. 0.14.11), RPM filename embeds it.
+# Custom feed so the RPM's sha256 is re-pinned on every bump.
+[appflowy]
+batch = 0
+
+[appflowy.updates]
+feed = "custom"
+custom = "appflowy"
 
 # ------------------------------------------------------------------ tools
 # onlyoffice-desktopeditors: heavy vendor rewrap of ONLYOFFICE's el7-built

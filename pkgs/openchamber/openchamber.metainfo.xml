@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>dev.openchamber.openchamber</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>OpenChamber</name>
+  <summary>Agentic Development Environment based on OpenCode AI agent</summary>
+  <description>
+    <p>OpenChamber is an agentic development environment based on the
+    OpenCode AI agent. This package rewraps the upstream prebuilt Linux
+    RPM for Fedora.</p>
+  </description>
+  <url type="homepage">https://openchamber.dev/</url>
+  <launchable type="desktop-id">openchamber.desktop</launchable>
+  <provides>
+    <id>openchamber.desktop</id>
+  </provides>
+  <keywords>
+    <keyword>opencode</keyword>
+    <keyword>ai</keyword>
+    <keyword>agent</keyword>
+  </keywords>
+  <pkgname>openchamber</pkgname>
+  <icon type="stock">openchamber</icon>
+  <categories>
+    <category>Development</category>
+  </categories>
+</component>
