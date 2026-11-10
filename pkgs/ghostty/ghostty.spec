@@ -38,9 +38,9 @@ BuildRequires:  pkgconfig(libpng)
 BuildRequires:  pkgconfig(libxml-2.0)
 BuildRequires:  pkgconfig(oniguruma)
 BuildRequires:  pkgconfig(zlib)
-Requires:       %{name}-terminfo = %{evr}
-Requires:       (%{name}-kio = %{evr} if kf5-kio-core)
-Requires:       (%{name}-kio = %{evr} if kf6-kio-core)
+Requires:       %{name}-terminfo = %{version}-%{release}
+Requires:       (%{name}-kio = %{version}-%{release} if kf5-kio-core)
+Requires:       (%{name}-kio = %{version}-%{release} if kf6-kio-core)
 Requires:       gtk4
 Requires:       gtk4-layer-shell
 Requires:       libadwaita
@@ -82,14 +82,14 @@ Zsh shell completion for Ghostty.
 
 %package        devel
 Summary:        Development files for Ghostty.
-Requires:       %{name} = %{evr}
+Requires:       %{name} = %{version}-%{release}
 
 %description    devel
 This package includes the development files for Ghostty.
 
 %package        kio
 Summary:        KIO support for Ghostty
-Requires:       %{name} = %{evr}
+Requires:       %{name} = %{version}-%{release}
 BuildArch:      noarch
 
 %description    kio
@@ -98,7 +98,7 @@ This package allows Ghostty to interact with KIO.
 %package        nautilus
 Summary:        Nautilus menu support for Ghostty
 Supplements:    (%{name} and nautilus)
-Requires:       %{name} = %{evr}
+Requires:       %{name} = %{version}-%{release}
 Requires:       nautilus-python
 BuildArch:      noarch
 
@@ -108,7 +108,7 @@ This package enables Nautilus integration for Ghostty.
 %package        vim
 Summary:        Vim plugins for Ghostty
 Supplements:    (%{name} and vim-filesystem)
-Requires:       %{name} = %{evr}
+Requires:       %{name} = %{version}-%{release}
 Requires:       vim-enhanced
 Requires:       vim-filesystem
 BuildArch:      noarch
@@ -119,7 +119,7 @@ This package provides the Ghostty Vim plugins.
 %package        neovim
 Summary:        Neovim plugins for Ghostty
 Supplements:    (%{name} and neovim)
-Requires:       %{name} = %{evr}
+Requires:       %{name} = %{version}-%{release}
 Requires:       neovim
 BuildArch:      noarch
 
@@ -129,7 +129,7 @@ This package provides the Neovim plugins for Ghostty.
 %package        bat-syntax
 Summary:        Bat syntax for Ghostty
 Supplements:    (%{name} and bat)
-Requires:       %{name} = %{evr}
+Requires:       %{name} = %{version}-%{release}
 Requires:       bat
 BuildArch:      noarch
 
@@ -150,7 +150,7 @@ Summary:        Ghostty terminfo
 Requires:       ncurses-term >= 6.5-5.20250125
 %endif
 Supplements:    %{name}
-Obsoletes:      %{name}-terminfo-source < %{evr}
+Obsoletes:      %{name}-terminfo-source < %{version}-%{release}
 BuildArch:      noarch
 
 %description    terminfo
@@ -164,7 +164,7 @@ This package contains the libghostty-vt libraries, the first of many libghostty 
 
 %package -n     libghostty-vt-devel
 Summary:        Development files for libghostty-vt
-Requires:       libghostty-vt = %{evr}
+Requires:       libghostty-vt = %{version}-%{release}
 
 %description -n libghostty-vt-devel
 This package contains the libraries and header files that are needed for developing with libghostty-vt.
