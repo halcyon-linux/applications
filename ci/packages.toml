@@ -316,13 +316,6 @@ custom = "bees"
 
 # --------------------------------------------------------------- ghostty
 
-[zig015]
-batch = 0
-
-[zig015.updates]
-feed = "custom"
-custom = "zig015"
-
 [zig017]
 batch = 0
 

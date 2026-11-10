@@ -133,6 +133,14 @@ def sweep_one(name: str, updates: dict, spec_path: Path, base: Path) -> tuple[bo
     """Sweep one package. Returns (wrote, old_version, new_version)."""
     spec = SpecFile(spec_path)
     old_version = spec.get_version()
+    prepare_spec(name, updates, spec, base)
+    wrote = spec.save()
+    return wrote, old_version, spec.get_version()
+
+
+def prepare_spec(name: str, updates: dict, spec: SpecFile, base: Path) -> None:
+    """Resolve a feed and update one in-memory spec without writing it."""
+    old_version = spec.get_version()
     feed = updates.get("feed")
     if feed == "github-release":
         spec.set_version(feeds.github_release_tag(updates["repo"]))
@@ -156,8 +164,18 @@ def sweep_one(name: str, updates: dict, spec_path: Path, base: Path) -> tuple[bo
         # the published NVR, or `dnf upgrade` skips it and the update is
         # silently lost. A real version change already reset Release to 1.
         spec.bump_release()
-    wrote = spec.save()
-    return wrote, old_version, spec.get_version()
+
+
+def sweep_ghostty_pair(swept: dict) -> list[tuple[str, bool, str, str]]:
+    """Resolve both feeds before either spec is saved."""
+    pending = []
+    for name in ("zig017", "ghostty"):
+        updates, path, base = swept[name]
+        spec = SpecFile(path)
+        old_version = spec.get_version()
+        prepare_spec(name, updates, spec, base)
+        pending.append((name, spec, old_version))
+    return [(name, spec.save(), old, spec.get_version()) for name, spec, old in pending]
 
 
 def main() -> None:
@@ -184,6 +202,21 @@ def main() -> None:
         die(f"not swept (no [updates] table in {PACKAGES_FILE}): {', '.join(unknown)}")
 
     failed = False
+    if "zig017" in names or "ghostty" in names:
+        names = [n for n in names if n not in ("zig017", "ghostty")]
+        try:
+            results = sweep_ghostty_pair(swept)
+        except (feeds.FeedError, SpecError, OSError, ValueError, KeyError,
+                TypeError, IndexError, subprocess.SubprocessError) as exc:
+            failed = True
+            print(f"error: ghostty/zig017: {exc}", file=sys.stderr)
+        else:
+            for name, wrote, old_version, new_version in results:
+                if wrote:
+                    print(f"bumped: {name}: {old_version} -> {new_version}")
+                else:
+                    print(f"unchanged: {name} ({new_version})")
+
     for name in names:
         updates, spec_path, base = swept[name]
         try:

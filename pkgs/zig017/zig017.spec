@@ -1,32 +1,45 @@
-%global public_key RWSGOq2NVecA2UPNdBUZykf1CCb147pkmdtYxgb3Ti+JO/wCYvhbAb/U
 %global debug_package %{nil}
 %global _build_id_links none
 %global __os_install_post %{nil}
 
 Name:           zig017
-Version:        0.17.1
+Epoch:          1
+Version:        0.17.0
 Release:        1%{?dist}
-Summary:        Zig 0.17 compiler and toolchain
+Summary:        General-purpose programming language and toolchain
+
 License:        MIT
-URL:            https://ziglang.org/
+URL:            https://ziglang.org
 Source0:        https://ziglang.org/download/%{version}/zig-x86_64-linux-%{version}.tar.xz
-Source1:        https://ziglang.org/download/%{version}/zig-x86_64-linux-%{version}.tar.xz.minisig
+
+%global upstream_sha256 1cbe9df9f27e6b78d14ccbca43b6703a404ef79ef1c463de901d7f088d4e2026
+
 ExclusiveArch:  x86_64
-BuildRequires:  minisign
-BuildRequires:  tar
-BuildRequires:  xz
+
+BuildRequires:  coreutils
 
 %description
-The Zig 0.17 compiler and standard library, packaged under a versioned name
-for reproducible builds that need the Zig 0.17 series.
+Zig is a general-purpose programming language and toolchain for maintaining
+robust, optimal, and reusable software.
+
+This package repackages the official upstream prebuilt compiler so Ghostty can
+be built with Zig %{version}, independently of Fedora's default Zig release.
 
 %prep
-/usr/bin/minisign -V -m %{SOURCE0} -x %{SOURCE1} -P %{public_key}
 %setup -q -c -T -n zig-%{version}
+
+actual_sum="$(sha256sum %{SOURCE0} | cut -d' ' -f1)"
+if [ "%{upstream_sha256}" != "$actual_sum" ]; then
+    echo "ERROR: checksum verification failed for %{SOURCE0}" >&2
+    echo "Expected: %{upstream_sha256}" >&2
+    echo "Actual:   $actual_sum" >&2
+    exit 1
+fi
+
 tar -xf %{SOURCE0} --strip-components=1
 
 %build
-# The official upstream archive contains the prebuilt compiler.
+# Upstream prebuilt compiler repackaging; nothing to build.
 
 %install
 install -Dpm 0755 zig %{buildroot}%{_libexecdir}/zig017/zig
@@ -46,4 +59,4 @@ test "$(%{buildroot}%{_bindir}/zig017 version)" = "%{version}"
 
 %changelog
 * Tue Nov 10 2026 halcyon-linux <aahsnr041@proton.me> - 0.17.0-1
-- Package the signed upstream Zig 0.17.0 compiler archive
+- Repackage the upstream Zig compiler for Ghostty

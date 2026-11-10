@@ -12,7 +12,9 @@ documented intent.
 
 from __future__ import annotations
 
+import base64
 import re
+from functools import lru_cache
 from pathlib import Path
 
 import feeds
@@ -627,58 +629,31 @@ def custom_zcode(spec: SpecFile, pkg_dir: Path) -> None:
 
 
 def custom_ghostty(spec: SpecFile, pkg_dir: Path) -> None:
-    # Ghostty publishes Linux x64 releases from release.files.ghostty.org.
-    # Version comes from GitHub tags (vX.Y.Z); source tarballs and minisign
-    # signatures are at release.files.ghostty.org/<version>/ghostty-<version>.tar.gz(.minisig).
-    from functools import cmp_to_key
-    from vercmp import rpmvercmp
-
-    # Fetch tags from GitHub (releases API doesn't carry the Linux tarballs)
-    tags = [t.removeprefix("v") for t in feeds.github_tag_names("ghostty-org/ghostty")]
-    tags.sort(key=cmp_to_key(rpmvercmp), reverse=True)
-
-    for version in tags:
-        if not re.fullmatch(r"[0-9][0-9.]*", version):
-            continue
-
-        # Verify the source tarball exists at release.files.ghostty.org
-        url = f"https://release.files.ghostty.org/{version}/ghostty-{version}.tar.gz"
-        if not feeds.head_probe(url):
-            continue
-
-        # Also check for the minisign signature
-        sig_url = f"https://release.files.ghostty.org/{version}/ghostty-{version}.tar.gz.minisig"
-        if not feeds.head_probe(sig_url):
-            continue
-
-        spec.set_version(version)
-        # The spec uses minisign verification via Source1, no sha256 digest needed
-        spec.set_global("digest", "none")
-        return
-
-    raise feeds.FeedError("ghostty: no tag carries a published tarball at release.files.ghostty.org")
-
-
-def _custom_zig_minor(spec: SpecFile, minor: str) -> None:
-    from functools import cmp_to_key
-    from vercmp import rpmvercmp
-
-    # Zig publishes all versions in index.json at https://ziglang.org/download/index.json
-    # GitHub tags are incomplete (e.g., 0.16.0, 0.17.0, 0.17.1 are missing)
-    index = feeds.fetch_json("https://ziglang.org/download/index.json")
-    versions = [
-        v for v in index
-        if re.fullmatch(rf"{re.escape(minor)}\.[0-9]+", v) and v != "master"
-    ]
-    versions.sort(key=cmp_to_key(rpmvercmp), reverse=True)
-    if not versions:
-        raise feeds.FeedError(f"zig{minor.replace('.', '')}: no {minor}.x release in index.json")
-    spec.set_version(versions[0])
-
-
-def custom_zig015(spec: SpecFile, pkg_dir: Path) -> None:
-    _custom_zig_minor(spec, "0.15")
+    version, zig_version = ghostty_pair_versions()
+    spec.set_version(version)
+    spec.set_global("zig_version", zig_version)
 
 
 def custom_zig017(spec: SpecFile, pkg_dir: Path) -> None:
-    _custom_zig_minor(spec, "0.17")
+    _, zig_version = ghostty_pair_versions()
+    index = feeds.fetch_json("https://ziglang.org/download/index.json")
+    archive = index.get(zig_version, {}).get("x86_64-linux", {})
+    expected = f"https://ziglang.org/download/{zig_version}/zig-x86_64-linux-{zig_version}.tar.xz"
+    if archive.get("tarball") != expected or not re.fullmatch(r"[0-9a-f]{64}", archive.get("shasum", "")):
+        raise feeds.FeedError(f"zig017: missing archive or checksum for {zig_version}")
+    spec.set_version(zig_version)
+    spec.set_global("upstream_sha256", archive["shasum"])
+
+
+@lru_cache(maxsize=1)
+def ghostty_pair_versions() -> tuple[str, str]:
+    data = feeds.fetch_json("https://api.github.com/repos/scottames/copr/contents/ghostty/ghostty.spec")
+    try:
+        source = base64.b64decode(data["content"], validate=False).decode("utf-8")
+    except (KeyError, ValueError, TypeError, UnicodeDecodeError) as exc:
+        raise feeds.FeedError("ghostty: cannot read reference spec") from exc
+    version = re.search(r"(?m)^Version:\s*([0-9]+(?:\.[0-9]+)+)\s*$", source)
+    zig = re.search(r"(?m)^BuildRequires:\s*zig017\s*=\s*(0\.17\.[0-9]+)\s*$", source)
+    if not version or not zig:
+        raise feeds.FeedError("ghostty: reference spec lacks a compatible version or Zig requirement")
+    return version.group(1), zig.group(1)
