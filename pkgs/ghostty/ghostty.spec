@@ -24,8 +24,7 @@ BuildRequires:  ncurses
 BuildRequires:  ncurses-devel
 BuildRequires:  pandoc-cli
 BuildRequires:  systemd-rpm-macros
-BuildRequires:  zig
-BuildRequires:  zig-rpm-macros
+BuildRequires:  zig017 >= 0.17.0
 BuildRequires:  pkgconfig(blueprint-compiler)
 BuildRequires:  pkgconfig(bzip2)
 BuildRequires:  pkgconfig(freetype2)
@@ -173,11 +172,17 @@ This package contains the libraries and header files that are needed for develop
 /usr/bin/minisign -V -m %{SOURCE0} -x %{SOURCE1} -P %{public_key}
 %autosetup
 
-ZIG_GLOBAL_CACHE_DIR="%{_zig_cache_dir}" ./nix/build-support/fetch-zig-cache.sh
+mkdir -p "%{_builddir}/zig017-bin"
+ln -sf "%{_bindir}/zig017" "%{_builddir}/zig017-bin/zig"
+PATH="%{_builddir}/zig017-bin:$PATH" \
+    ZIG_GLOBAL_CACHE_DIR="%{_builddir}/zig-global-cache" \
+    ./nix/build-support/fetch-zig-cache.sh
 
 %build
+PATH="%{_builddir}/zig017-bin:$PATH" \
+ZIG_GLOBAL_CACHE_DIR="%{_builddir}/zig-global-cache" \
 DESTDIR="%{buildroot}" \
-%{zig_build_target -r fast} \
+zig017 build -Doptimize=ReleaseFast \
     --prefix "%{_prefix}" --prefix-lib-dir "%{_libdir}" \
     --prefix-exe-dir "%{_bindir}" --prefix-include-dir "%{_includedir}" \
     -Dversion-string="%{version}" \

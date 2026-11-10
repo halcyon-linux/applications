@@ -657,3 +657,25 @@ def custom_ghostty(spec: SpecFile, pkg_dir: Path) -> None:
         return
 
     raise feeds.FeedError("ghostty: no tag carries a published tarball at release.files.ghostty.org")
+
+
+def _custom_zig_minor(spec: SpecFile, minor: str) -> None:
+    from functools import cmp_to_key
+    from vercmp import rpmvercmp
+
+    versions = [
+        tag for tag in feeds.github_tag_names("ziglang/zig")
+        if re.fullmatch(rf"{re.escape(minor)}\.[0-9]+", tag)
+    ]
+    versions.sort(key=cmp_to_key(rpmvercmp), reverse=True)
+    if not versions:
+        raise feeds.FeedError(f"zig{minor.replace('.', '')}: no {minor}.x release tags")
+    spec.set_version(versions[0])
+
+
+def custom_zig015(spec: SpecFile, pkg_dir: Path) -> None:
+    _custom_zig_minor(spec, "0.15")
+
+
+def custom_zig017(spec: SpecFile, pkg_dir: Path) -> None:
+    _custom_zig_minor(spec, "0.17")

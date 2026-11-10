@@ -14,9 +14,9 @@
 # to the project repo, so a package may rely on anything built in a lower
 # batch. Packages inside one batch must therefore never depend on each other.
 #
-# batch 0  every package — none BuildRequires another registry package, so
-#          the whole registry builds in one wave (onlyoffice's heavy source
-#          build included; batch semantics are dependency levels, not weight)
+# batch 0  packages with no registry-package BuildRequires, including the
+#          isolated Zig toolchains
+# batch 1  packages that BuildRequire batch 0 output; Ghostty uses zig017
 # The [pkg.updates] table drives the version sweep (update.yml) and is
 # required for every package — sweep.py --check enforces it:
 #   feed = "github-release"  + repo = "owner/name"   latest GitHub release tag
@@ -316,8 +316,22 @@ custom = "bees"
 
 # --------------------------------------------------------------- ghostty
 
-[ghostty]
+[zig015]
 batch = 0
+
+[zig015.updates]
+feed = "custom"
+custom = "zig015"
+
+[zig017]
+batch = 0
+
+[zig017.updates]
+feed = "custom"
+custom = "zig017"
+
+[ghostty]
+batch = 1
 
 [ghostty.updates]
 feed = "custom"
