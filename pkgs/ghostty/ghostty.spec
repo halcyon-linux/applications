@@ -9,7 +9,7 @@
 
 Name:           ghostty
 Version:        1.4.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        A fast, native terminal emulator written in Zig.
 License:        MIT AND MPL-2.0 AND OFL-1.1 AND (WTFPL OR CC0-1.0) AND Apache-2.0
 URL:            https://ghostty.org/
@@ -27,6 +27,7 @@ BuildRequires:  systemd-rpm-macros
 BuildRequires:  zig017 >= 0.17.0
 BuildRequires:  pkgconfig(blueprint-compiler)
 BuildRequires:  pkgconfig(bzip2)
+BuildRequires:  pkgconfig(egl)
 BuildRequires:  pkgconfig(freetype2)
 BuildRequires:  pkgconfig(fontconfig)
 BuildRequires:  pkgconfig(gtk4)
@@ -172,15 +173,7 @@ This package contains the libraries and header files that are needed for develop
 /usr/bin/minisign -V -m %{SOURCE0} -x %{SOURCE1} -P %{public_key}
 %autosetup
 
-mkdir -p "%{_builddir}/zig017-bin"
-ln -sf "%{_bindir}/zig017" "%{_builddir}/zig017-bin/zig"
-PATH="%{_builddir}/zig017-bin:$PATH" \
-    ZIG_GLOBAL_CACHE_DIR="%{_builddir}/zig-global-cache" \
-    ./nix/build-support/fetch-zig-cache.sh
-
 %build
-PATH="%{_builddir}/zig017-bin:$PATH" \
-ZIG_GLOBAL_CACHE_DIR="%{_builddir}/zig-global-cache" \
 DESTDIR="%{buildroot}" \
 zig017 build -Doptimize=ReleaseFast \
     --prefix "%{_prefix}" --prefix-lib-dir "%{_libdir}" \
@@ -282,6 +275,9 @@ rm -rf %{buildroot}%{_datadir}/terminfo/g/%{name}
 %{_datadir}/pkgconfig/libghostty-vt.pc
 
 %changelog
+* Tue Nov 10 2026 halcyon-linux <aahsnr041@proton.me> - 1.4.0-2
+- Let Zig resolve dependencies directly; the prefetch helper corrupts cache entries with Zig 0.17
+- Add the system EGL build dependency required by Ghostty 1.4
 * Tue Nov 10 2026 halcyon-linux <aahsnr041@proton.me> - 1.4.0-1
 - Update to 1.4.0
 * Tue Oct 28 2025 halcyon-linux <aahsnr041@proton.me> - 1.2.3-1
