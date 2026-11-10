@@ -12,9 +12,7 @@ documented intent.
 
 from __future__ import annotations
 
-import base64
 import re
-from functools import lru_cache
 from pathlib import Path
 
 import feeds
@@ -149,6 +147,37 @@ def custom_openchamber_cli(spec: SpecFile, pkg_dir: Path) -> None:
         return
     raise feeds.FeedError(
         "openchamber-cli: no release in the last 30 ships an openchamber-web-<ver>.tgz"
+    )
+
+
+def custom_pi_gui(spec: SpecFile, pkg_dir: Path) -> None:
+    # Track the newest stable release that carries the official amd64 Debian
+    # package. Its GitHub asset digest is required so every RPM build verifies
+    # the exact prebuilt Electron payload before unpacking it.
+    releases = feeds.fetch_json(
+        "https://api.github.com/repos/minghinmatthewlam/pi-gui/releases?per_page=30"
+    )
+    for release in releases:
+        if release.get("prerelease"):
+            continue
+        match = re.fullmatch(r"v([0-9]+\.[0-9]+\.[0-9]+)", release.get("tag_name", ""))
+        if not match:
+            continue
+        version = match.group(1)
+        expected_name = f"pi-gui_{version}_amd64.deb"
+        for asset in release.get("assets", []):
+            if asset.get("name") != expected_name:
+                continue
+            digest = asset.get("digest") or ""
+            if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+                raise feeds.FeedError(
+                    f"pi-gui: {expected_name} has no valid GitHub SHA256 digest"
+                )
+            spec.set_version(version)
+            spec.set_global("digest", digest.removeprefix("sha256:"))
+            return
+    raise feeds.FeedError(
+        "pi-gui: no stable release in the last 30 carries pi-gui_<version>_amd64.deb"
     )
 
 
@@ -626,34 +655,3 @@ def custom_zcode(spec: SpecFile, pkg_dir: Path) -> None:
     if not feeds.head_probe(url):
         raise feeds.FeedError(f"zcode: official RPM is not published at {url}")
     spec.set_version(version)
-
-
-def custom_ghostty(spec: SpecFile, pkg_dir: Path) -> None:
-    version, zig_version = ghostty_pair_versions()
-    spec.set_version(version)
-    spec.set_global("zig_version", zig_version)
-
-
-def custom_zig017(spec: SpecFile, pkg_dir: Path) -> None:
-    _, zig_version = ghostty_pair_versions()
-    index = feeds.fetch_json("https://ziglang.org/download/index.json")
-    archive = index.get(zig_version, {}).get("x86_64-linux", {})
-    expected = f"https://ziglang.org/download/{zig_version}/zig-x86_64-linux-{zig_version}.tar.xz"
-    if archive.get("tarball") != expected or not re.fullmatch(r"[0-9a-f]{64}", archive.get("shasum", "")):
-        raise feeds.FeedError(f"zig017: missing archive or checksum for {zig_version}")
-    spec.set_version(zig_version)
-    spec.set_global("upstream_sha256", archive["shasum"])
-
-
-@lru_cache(maxsize=1)
-def ghostty_pair_versions() -> tuple[str, str]:
-    data = feeds.fetch_json("https://api.github.com/repos/scottames/copr/contents/ghostty/ghostty.spec")
-    try:
-        source = base64.b64decode(data["content"], validate=False).decode("utf-8")
-    except (KeyError, ValueError, TypeError, UnicodeDecodeError) as exc:
-        raise feeds.FeedError("ghostty: cannot read reference spec") from exc
-    version = re.search(r"(?m)^Version:\s*([0-9]+(?:\.[0-9]+)+)\s*$", source)
-    zig = re.search(r"(?m)^BuildRequires:\s*zig017\s*=\s*(0\.17\.[0-9]+)\s*$", source)
-    if not version or not zig:
-        raise feeds.FeedError("ghostty: reference spec lacks a compatible version or Zig requirement")
-    return version.group(1), zig.group(1)

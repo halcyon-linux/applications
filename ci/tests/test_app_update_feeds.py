@@ -2,21 +2,16 @@ from __future__ import annotations
 
 import tempfile
 import unittest
-import base64
 from pathlib import Path
 from unittest.mock import patch
 
 from custom import (
-    custom_ghostty,
-    custom_zig017,
-    ghostty_pair_versions,
     custom_openwork,
     custom_podman_desktop,
     custom_windscribe,
     custom_zcode,
 )
 from spec import SpecFile
-from feeds import FeedError
 
 
 SPEC_TEXT = """\
@@ -35,7 +30,6 @@ Example.
 
 class AppUpdateFeedsTest(unittest.TestCase):
     def setUp(self):
-        ghostty_pair_versions.cache_clear()
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.path = Path(self.tmp.name) / "example.spec"
@@ -113,31 +107,6 @@ class AppUpdateFeedsTest(unittest.TestCase):
             custom_windscribe(spec, Path(self.tmp.name))
         self.assertEqual(spec.get_version(), "2.24.13")
         self.assertEqual(spec.get_global("digest"), "c" * 64)
-
-    def test_ghostty_and_zig_use_matched_reference_version_and_checksum(self):
-        reference = base64.b64encode(b"Version: 1.4.1\nBuildRequires: zig017 = 0.17.2\n").decode()
-        index = {"0.17.2": {"x86_64-linux": {
-            "tarball": "https://ziglang.org/download/0.17.2/zig-x86_64-linux-0.17.2.tar.xz",
-            "shasum": "a" * 64,
-        }}}
-        self.path.write_text(SPEC_TEXT.replace("%global digest none", "%global zig_version 0.17.0\n%global upstream_sha256 " + "b" * 64))
-        with patch("custom.feeds.fetch_json", side_effect=[{"content": reference}, index]) as fetch:
-            ghostty = self.spec()
-            custom_ghostty(ghostty, Path(self.tmp.name))
-            zig = self.spec()
-            custom_zig017(zig, Path(self.tmp.name))
-        self.assertEqual(fetch.call_count, 2)
-        self.assertEqual(ghostty.get_version(), "1.4.1")
-        self.assertEqual(ghostty.get_global("zig_version"), "0.17.2")
-        self.assertEqual(zig.get_version(), "0.17.2")
-        self.assertEqual(zig.get_global("upstream_sha256"), "a" * 64)
-
-    def test_zig_rejects_missing_matching_archive(self):
-        reference = base64.b64encode(b"Version: 1.4.1\nBuildRequires: zig017 = 0.17.2\n").decode()
-        with patch("custom.feeds.fetch_json", side_effect=[{"content": reference}, {}]):
-            with self.assertRaises(FeedError):
-                custom_zig017(self.spec(), Path(self.tmp.name))
-
 
 if __name__ == "__main__":
     unittest.main()

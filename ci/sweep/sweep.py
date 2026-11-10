@@ -166,18 +166,6 @@ def prepare_spec(name: str, updates: dict, spec: SpecFile, base: Path) -> None:
         spec.bump_release()
 
 
-def sweep_ghostty_pair(swept: dict) -> list[tuple[str, bool, str, str]]:
-    """Resolve both feeds before either spec is saved."""
-    pending = []
-    for name in ("zig017", "ghostty"):
-        updates, path, base = swept[name]
-        spec = SpecFile(path)
-        old_version = spec.get_version()
-        prepare_spec(name, updates, spec, base)
-        pending.append((name, spec, old_version))
-    return [(name, spec.save(), old, spec.get_version()) for name, spec, old in pending]
-
-
 def main() -> None:
     ap = argparse.ArgumentParser(description="halcyon-applications version sweep")
     ap.add_argument("--pkg", nargs="+", help="sweep only these packages (default: all)")
@@ -202,21 +190,6 @@ def main() -> None:
         die(f"not swept (no [updates] table in {PACKAGES_FILE}): {', '.join(unknown)}")
 
     failed = False
-    if "zig017" in names or "ghostty" in names:
-        names = [n for n in names if n not in ("zig017", "ghostty")]
-        try:
-            results = sweep_ghostty_pair(swept)
-        except (feeds.FeedError, SpecError, OSError, ValueError, KeyError,
-                TypeError, IndexError, subprocess.SubprocessError) as exc:
-            failed = True
-            print(f"error: ghostty/zig017: {exc}", file=sys.stderr)
-        else:
-            for name, wrote, old_version, new_version in results:
-                if wrote:
-                    print(f"bumped: {name}: {old_version} -> {new_version}")
-                else:
-                    print(f"unchanged: {name} ({new_version})")
-
     for name in names:
         updates, spec_path, base = swept[name]
         try:

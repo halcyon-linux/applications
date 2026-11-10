@@ -14,9 +14,8 @@
 # to the project repo, so a package may rely on anything built in a lower
 # batch. Packages inside one batch must therefore never depend on each other.
 #
-# batch 0  packages with no registry-package BuildRequires, including the
-#          isolated Zig toolchains
-# batch 1  packages that BuildRequire batch 0 output; Ghostty uses zig017
+# batch 0  packages with no registry-package BuildRequires
+# batch N  packages that BuildRequire output from a lower batch
 # The [pkg.updates] table drives the version sweep (update.yml) and is
 # required for every package — sweep.py --check enforces it:
 #   feed = "github-release"  + repo = "owner/name"   latest GitHub release tag
@@ -133,6 +132,15 @@ batch = 0
 [obsidian.updates]
 feed = "custom"
 custom = "obsidian"
+
+# pi-gui: rewrap of upstream's official Linux x86_64 Debian package; the
+# custom feed selects releases carrying the .deb and pins its SHA256 digest.
+[pi-gui]
+batch = 0
+
+[pi-gui.updates]
+feed = "custom"
+custom = "pi-gui"
 
 # claude-desktop: vendor rewrap of Anthropic's official .deb; the apt
 # Packages index supplies both the version and the sha256.
@@ -313,19 +321,3 @@ batch = 0
 [bees.updates]
 feed = "custom"
 custom = "bees"
-
-# --------------------------------------------------------------- ghostty
-
-[zig017]
-batch = 0
-
-[zig017.updates]
-feed = "custom"
-custom = "zig017"
-
-[ghostty]
-batch = 1
-
-[ghostty.updates]
-feed = "custom"
-custom = "ghostty"
