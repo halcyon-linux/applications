@@ -628,38 +628,32 @@ def custom_zcode(spec: SpecFile, pkg_dir: Path) -> None:
 
 def custom_ghostty(spec: SpecFile, pkg_dir: Path) -> None:
     # Ghostty publishes Linux x64 releases from release.files.ghostty.org.
-    # Version comes from URL path; signature verification via Source1.
-    # The release pattern is: ghostty-<version>.tar.gz with minisign signature.
+    # Version comes from GitHub tags (vX.Y.Z); source tarballs and minisign
+    # signatures are at release.files.ghostty.org/<version>/ghostty-<version>.tar.gz(.minisig).
     from functools import cmp_to_key
     from vercmp import rpmvercmp
 
-    # Fetch releases from ghostty's release server
-    releases = feeds.fetch_json(
-        "https://api.github.com/repos/ghostty-org/ghostty/releases?per_page=30")
-    
-    for release in releases:
-        if release.get("draft") or release.get("prerelease"):
+    # Fetch tags from GitHub (releases API doesn't carry the Linux tarballs)
+    tags = [t.removeprefix("v") for t in feeds.github_tag_names("ghostty-org/ghostty")]
+    tags.sort(key=cmp_to_key(rpmvercmp), reverse=True)
+
+    for version in tags:
+        if not re.fullmatch(r"[0-9][0-9.]*", version):
             continue
-        
-        # Ghostty uses t.X.Y.Z version format (tags)
-        tag = release.get("tag_name", "")
-        if not re.fullmatch(r"t\.[0-9][0-9.]+", tag):
+
+        # Verify the source tarball exists at release.files.ghostty.org
+        url = f"https://release.files.ghostty.org/{version}/ghostty-{version}.tar.gz"
+        if not feeds.head_probe(url):
             continue
-            
-        version = tag[2:]  # Remove "t." prefix
-        
-        # Find the linux-x64 tarball asset
-        asset_name = f"ghostty-{version}.tar.gz"
-        for asset in release.get("assets", []):
-            if asset.get("name") != asset_name:
-                continue
-                
-            digest = asset.get("digest") or "none"
-            if digest.startswith("sha256:"):
-                digest = digest[len("sha256:"):]
-                
-            spec.set_version(version)
-            spec.set_global("digest", digest)
-            return
-    
-    raise feeds.FeedError("ghostty: no release in the last 30 ships ghostty-<ver>.tar.gz")
+
+        # Also check for the minisign signature
+        sig_url = f"https://release.files.ghostty.org/{version}/ghostty-{version}.tar.gz.minisig"
+        if not feeds.head_probe(sig_url):
+            continue
+
+        spec.set_version(version)
+        # The spec uses minisign verification via Source1, no sha256 digest needed
+        spec.set_global("digest", "none")
+        return
+
+    raise feeds.FeedError("ghostty: no tag carries a published tarball at release.files.ghostty.org")

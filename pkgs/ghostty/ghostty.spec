@@ -1,13 +1,14 @@
 # Signing key from https://github.com/ghostty-org/ghostty/blob/main/PACKAGING.md
 %global public_key RWQlAjJC23149WL2sEpT/l0QKy7hMIFhYdQOFy0Z7z7PbneUgvlsnYcV
 %global appid com.mitchellh.ghostty
+%global digest none
 
 %global             debug_package %{nil}
 %global _build_id_links none
 %global             __os_install_post %{nil}
 
 Name:           ghostty
-Version:        1.0.0
+Version:        1.4.0
 Release:        1%{?dist}
 Summary:        A fast, native terminal emulator written in Zig.
 License:        MIT AND MPL-2.0 AND OFL-1.1 AND (WTFPL OR CC0-1.0) AND Apache-2.0
@@ -275,6 +276,8 @@ rm -rf %{buildroot}%{_datadir}/terminfo/g/%{name}
 %{_datadir}/pkgconfig/libghostty-vt.pc
 
 %changelog
+* Tue Nov 10 2026 halcyon-linux <aahsnr041@proton.me> - 1.4.0-1
+- Update to 1.4.0
 * Tue Oct 28 2025 halcyon-linux <aahsnr041@proton.me> - 1.2.3-1
 - Disabled bundled themes
  * This is necessary to address licensing issues in the themes repo Ghostty uses
