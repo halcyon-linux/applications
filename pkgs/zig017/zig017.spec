@@ -4,7 +4,7 @@
 %global __os_install_post %{nil}
 
 Name:           zig017
-Version:        0.17.0
+Version:        0.17.1
 Release:        1%{?dist}
 Summary:        Zig 0.17 compiler and toolchain
 License:        MIT

@@ -33,6 +33,7 @@ ALLOWED_HOSTS = frozenset({
     "persistent.oaistatic.com",
     "release.files.ghostty.org",
     "repo.protonvpn.com",
+    "ziglang.org",
 })
 
 

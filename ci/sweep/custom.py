@@ -663,13 +663,16 @@ def _custom_zig_minor(spec: SpecFile, minor: str) -> None:
     from functools import cmp_to_key
     from vercmp import rpmvercmp
 
+    # Zig publishes all versions in index.json at https://ziglang.org/download/index.json
+    # GitHub tags are incomplete (e.g., 0.16.0, 0.17.0, 0.17.1 are missing)
+    index = feeds.fetch_json("https://ziglang.org/download/index.json")
     versions = [
-        tag for tag in feeds.github_tag_names("ziglang/zig")
-        if re.fullmatch(rf"{re.escape(minor)}\.[0-9]+", tag)
+        v for v in index
+        if re.fullmatch(rf"{re.escape(minor)}\.[0-9]+", v) and v != "master"
     ]
     versions.sort(key=cmp_to_key(rpmvercmp), reverse=True)
     if not versions:
-        raise feeds.FeedError(f"zig{minor.replace('.', '')}: no {minor}.x release tags")
+        raise feeds.FeedError(f"zig{minor.replace('.', '')}: no {minor}.x release in index.json")
     spec.set_version(versions[0])
 
 
