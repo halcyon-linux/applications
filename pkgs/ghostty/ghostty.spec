@@ -9,7 +9,7 @@
 
 Name:           ghostty
 Version:        1.4.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        A fast, native terminal emulator written in Zig.
 License:        MIT AND MPL-2.0 AND OFL-1.1 AND (WTFPL OR CC0-1.0) AND Apache-2.0
 URL:            https://ghostty.org/
@@ -174,6 +174,9 @@ This package contains the libraries and header files that are needed for develop
 %autosetup
 
 %build
+# Update dependency hashes from the Zig package index (avoids hash mismatches
+# when upstream's build.zig.zon files are stale relative to the package index)
+zig017 fetch
 DESTDIR="%{buildroot}" \
 zig017 build -Doptimize=ReleaseFast \
     --prefix "%{_prefix}" --prefix-lib-dir "%{_libdir}" \
@@ -275,6 +278,8 @@ rm -rf %{buildroot}%{_datadir}/terminfo/g/%{name}
 %{_datadir}/pkgconfig/libghostty-vt.pc
 
 %changelog
+* Tue Nov 10 2026 halcyon-linux <aahsnr041@proton.me> - 1.4.0-3
+- Run zig017 fetch before build to update dependency hashes; fixes build failure from stale hashes in build.zig.zon
 * Tue Nov 10 2026 halcyon-linux <aahsnr041@proton.me> - 1.4.0-2
 - Let Zig resolve dependencies directly; the prefetch helper corrupts cache entries with Zig 0.17
 - Add the system EGL build dependency required by Ghostty 1.4
