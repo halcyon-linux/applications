@@ -176,8 +176,6 @@ This package contains the libraries and header files that are needed for develop
 ZIG_GLOBAL_CACHE_DIR="%{_zig_cache_dir}" ./nix/build-support/fetch-zig-cache.sh
 
 %build
-
-%install
 DESTDIR="%{buildroot}" \
 %{zig_build_target -r fast} \
     --prefix "%{_prefix}" --prefix-lib-dir "%{_libdir}" \
@@ -187,6 +185,9 @@ DESTDIR="%{buildroot}" \
     -Dpie=true \
     -Demit-docs \
     -Demit-themes=false
+
+%install
+# Zig build already installs to --prefix; nothing to do in %install
 
 # Don't conflict with ncurses-term on F42 and up
 %if 0%{?fedora} >= 42
