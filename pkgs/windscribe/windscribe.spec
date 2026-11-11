@@ -2,7 +2,7 @@
 # update feed pins the stable GitHub release asset digest. Recreate package
 # identity and service lifecycle locally instead of running upstream scriptlets,
 # whose uninstall path deletes /etc/windscribe and /var/lib/windscribe.
-%global             digest 7f37792789fea5299325f4b121cb3a347c088fa38d5311f4f13aaac3684c30f8
+%global             digest d8582ef74165835fd18640490c52e256b02b0cca75c6b7e9d548987237edd990
 %global             debug_package %{nil}
 %global _build_id_links none
 %global             __os_install_post %{nil}
@@ -10,7 +10,7 @@
 %global __requires_exclude ^libcrypto[.]so[.]4|^libssl[.]so[.]4|^libwsnet[.]so
 
 Name:               windscribe
-Version:            2.24.13
+Version:            2.25.8
 Release:            1%{?dist}
 Summary:            Windscribe VPN desktop client
 License:            GPL-2.0-only
