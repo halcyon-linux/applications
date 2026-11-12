@@ -321,3 +321,12 @@ batch = 0
 [bees.updates]
 feed = "custom"
 custom = "bees"
+
+# --------------------------------------------------------------- ghostty
+
+[ghostty]
+batch = 0
+
+[ghostty.updates]
+feed = "custom"
+custom = "ghostty"

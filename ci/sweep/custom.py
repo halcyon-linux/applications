@@ -655,3 +655,41 @@ def custom_zcode(spec: SpecFile, pkg_dir: Path) -> None:
     if not feeds.head_probe(url):
         raise feeds.FeedError(f"zcode: official RPM is not published at {url}")
     spec.set_version(version)
+
+def custom_ghostty(spec: SpecFile, pkg_dir: Path) -> None:
+    # Ghostty publishes Linux x64 releases from release.files.ghostty.org.
+    # Version comes from URL path; signature verification via Source1.
+    # The release pattern is: ghostty-<version>.tar.gz with minisign signature.
+    from functools import cmp_to_key
+    from vercmp import rpmvercmp
+
+    # Fetch releases from ghostty's release server
+    releases = feeds.fetch_json(
+        "https://api.github.com/repos/ghostty-org/ghostty/releases?per_page=30")
+    
+    for release in releases:
+        if release.get("draft") or release.get("prerelease"):
+            continue
+        
+        # Ghostty uses t.X.Y.Z version format (tags)
+        tag = release.get("tag_name", "")
+        if not re.fullmatch(r"t\.[0-9][0-9.]+", tag):
+            continue
+            
+        version = tag[2:]  # Remove "t." prefix
+        
+        # Find the linux-x64 tarball asset
+        asset_name = f"ghostty-{version}.tar.gz"
+        for asset in release.get("assets", []):
+            if asset.get("name") != asset_name:
+                continue
+                
+            digest = asset.get("digest") or "none"
+            if digest.startswith("sha256:"):
+                digest = digest[len("sha256:"):]
+                
+            spec.set_version(version)
+            spec.set_global("digest", digest)
+            return
+    
+    raise feeds.FeedError("ghostty: no release in the last SC ships ghostty-<ver>.tar.gz")
