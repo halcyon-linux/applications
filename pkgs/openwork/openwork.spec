@@ -1,7 +1,7 @@
 # Vendor rewrap of OpenWork's public Electron Linux x64 release archive.
 # The updater feed pins the release asset digest; disable the in-app updater
 # so package updates remain owned by dnf.
-%global             digest c57a3a2b053b3c8caf7b8e18317e3266bdafdc763900ed930a4e0bd4cce244d4
+%global             digest f2fcd499e9611c07e951fca056ddc23f8519afb4fe86e47fe3842affb21d939d
 %global             debug_package %{nil}
 %global _build_id_links none
 %global             __os_install_post %{nil}
@@ -11,7 +11,7 @@
 %global __requires_exclude ^libffmpeg[.]so|^libvulkan[.]so[.]1|^libEGL[.]so|^libGLESv2[.]so|^libvk_swiftshader[.]so|^libc[.]musl|^ld-linux-aarch64
 
 Name:           openwork
-Version:        0.18.66
+Version:        0.18.67
 Release:        1%{?dist}
 Summary:        Open-source AI agent desktop workspace
 License:        MIT
