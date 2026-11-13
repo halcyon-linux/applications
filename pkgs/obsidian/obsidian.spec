@@ -17,7 +17,7 @@
 #     when upstream publishes none (also resolves the old deferred blocker).
 #   * options=(!strip) -> debug_package/__os_install_post nil.
 %global             full_name obsidian
-%global             digest 75594ae09914ca0191dde13c0697dee653322287a3a806c15519332d9ada14d3
+%global             digest 09074f0635ecf366307d808d0fec06c01a87a0bcc66da6d34126ceece0eb8519
 %global             debug_package %{nil}
 %global _build_id_links none
 %global             __os_install_post %{nil}
@@ -33,7 +33,7 @@
 %global __requires_exclude ^libffmpeg[.]so|^libvulkan[.]so[.]1|^libEGL[.]so|^libGLESv2[.]so|^libvk_swiftshader[.]so
 
 Name:               obsidian
-Version:            1.15.0
+Version:            1.15.1
 Release:            1%{?dist}
 Summary:            A powerful knowledge base that works on top of a local folder of plain text Markdown files
 License:            LicenseRef-Obsidian

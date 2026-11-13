@@ -10,11 +10,11 @@
 %global __requires_exclude_from ^/usr/lib/openchamber-web/node_modules/.*$
 %global __requires_exclude ^/usr/bin/(node|pwsh|python3)$
 %global node_version 24.22.1
-%global digest 4eff3cfb10c16a1c748afe420452f768e844f08075f2478c36f253ba4bd9e064
+%global digest ec1cc259a2546a3ad9ab80c9f61b7730205f8f21f01381a8d983c55ff0a58399
 
 Name:           openchamber-cli
-Version:        2.7.0
-Release:        2%{?dist}
+Version:        2.7.1
+Release:        1%{?dist}
 Summary:        OpenChamber Web Server and CLI
 License:        MIT
 URL:            https://openchamber.dev/
