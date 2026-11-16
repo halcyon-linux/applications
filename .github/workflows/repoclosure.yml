@@ -3,10 +3,10 @@
 #
 # Adapted from LionHeartP/hyprlandRPM's repoclosure.yml: run dnf's
 # repoclosure against EVERYTHING published in this repository's Copr project and
-# fail if any RPM's dependencies cannot resolve against Fedora 44/45 (+
+# fail if any RPM's dependencies cannot resolve against Fedora 45 (+
 # Terra, which the buildroot also supplies). This catches what per-package
 # builds cannot: a package whose runtime Requires nothing satisfies — a new
-# hyprland needing a newer lib than Fedora 44 has, a broken texlive group
+# hyprland needing a newer lib than Fedora 45 has, a broken texlive group
 # pin, a bumped-away dependency.
 #
 # The repo drop-in is the checked-in repo/applications.repo (the consumer
@@ -99,7 +99,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     container:
-      image: registry.fedoraproject.org/fedora:44
+      image: registry.fedoraproject.org/fedora:45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Install the repo drop-in (this project's + Terra + lionheartp)
@@ -168,7 +168,7 @@ jobs:
           # packages this way (fedora-copr/copr#4539); these chroots have
           # matched pkgs/ exactly and must keep doing so.
           rc=0
-          for rv in 44 45; do
+          for rv in 45; do
             published="$(dnf -q --releasever=$rv repoquery \
               --arch src \
               --repoid="copr:copr.fedorainfracloud.org:aahsnr-work:applications" \
@@ -202,7 +202,7 @@ jobs:
           set -eu
           repo="copr:copr.fedorainfracloud.org:aahsnr-work:applications"
           rc=0
-          for rv in 44 45; do
+          for rv in 45; do
             q() { dnf -q --releasever=$rv repoquery --repoid="$repo" --arch x86_64,noarch --latest-limit=1 "$@"; }
             for name in $(q --qf '%{name}\n' | sort -u); do
               prov="$(q --provides "$name" | grep -E '[.]so' | sort -u || true)"
@@ -273,10 +273,9 @@ jobs:
           while :; do
             attempt=$((attempt+1))
             rc=0
-            # both supported Fedora releases: the group repos, lionheartp and
-            # Terra are all $releasever-parameterized, so one --releasever flip
-            # retargets the whole resolution set
-            for rv in 44 45; do
+            # The group repos, lionheartp and Terra are all $releasever-
+            # parameterized, so --releasever retargets the whole resolution set.
+            for rv in 45; do
               for p in $COPR_PROJECTS; do
                 grp=${p#*/}
                 echo "::group::repoclosure fc$rv ($grp) attempt $attempt"

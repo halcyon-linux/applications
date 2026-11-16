@@ -21,8 +21,8 @@
 # version, so main-line failures are self-healing).
 #
 # External repos (per-chroot, copr-cli edit-chroot): the lionheartp/Hyprland
-# Copr as a lowest-priority bootstrap for fresh projects, and Terra 44 (it
-# supplies anda-srpm-macros, which Fedora 44 does not carry).
+# Copr as a lowest-priority bootstrap for fresh projects, and Terra 45 (it
+# supplies anda-srpm-macros, which Fedora 45 does not carry).
 name: copr-build
 
 on:

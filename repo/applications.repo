@@ -2,7 +2,7 @@
 # cli-tools, applications, fonts, texlive-packages, linux-p03).
 #
 # Enable with:  install -Dm644 repo/applications.repo /etc/yum.repos.d/
-# (or `dnf copr enable aahsnr-work/applications fedora-44` and merge the priority=1
+# (or `dnf copr enable aahsnr-work/applications fedora-45` and merge the priority=1
 # line into the generated file — the copr plugin does not set priorities).
 #
 # priority=1 (dnf: lower number wins; Fedora/Terra default to 99) makes every
