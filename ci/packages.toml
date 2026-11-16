@@ -321,3 +321,11 @@ batch = 0
 [bees.updates]
 feed = "custom"
 custom = "bees"
+
+# PiChamber: rewrap of the official upstream x86_64 RPM.
+[pichamber]
+batch = 0
+
+[pichamber.updates]
+feed = "github-release"
+repo = "RyderAsKing/PiChamber"
