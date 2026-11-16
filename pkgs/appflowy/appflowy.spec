@@ -23,14 +23,14 @@
 %define __requires_exclude ^(%(ls %{buildroot}%{_libdir}/appflowy/lib | grep '^lib' | sed -E 's/[.]so.*//; s/[.]/[.]/g' | sort -u | paste -sd'|'))[.]so
 
 Name:           appflowy
-Version:        0.15.0
+Version:        0.15.1
 Release:        1%{?dist}
 Summary:        AppFlowy — open-source Notion alternative for notes and project management
 License:        AGPL-3.0-only
 URL:            https://www.appflowy.io/
 # The RPM sha256 digest is pinned by the sweep (or 'none' when upstream
 # publishes no digest). Verified in %%prep.
-%global digest cdc613df2d155eb525bd3d533beda476237a45f51e3e35bba6105a47cc97bf80
+%global digest 103936beb4ee8c5880562ec4d7a93ae7888c32e8b592e2f25579cd5ee3acfc37
 Source0:        https://github.com/AppFlowy-IO/AppFlowy/releases/download/%{version}/AppFlowy-%{version}-linux-x86_64.rpm
 Source1:        https://raw.githubusercontent.com/AppFlowy-IO/AppFlowy/%{version}/LICENSE
 
