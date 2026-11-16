@@ -11,8 +11,8 @@
 %global __requires_exclude ^libffmpeg[.]so|^libvulkan[.]so[.]1|^libvk_swiftshader[.]so|^libvips-cpp[.]so
 
 Name:           zcode
-Version:        3.17.2
-Release:        2%{?dist}
+Version:        3.18.2
+Release:        1%{?dist}
 Summary:        Z.ai AI-assisted development environment
 License:        LicenseRef-ZCode
 URL:            https://zcode.z.ai/en
