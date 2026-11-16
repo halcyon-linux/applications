@@ -78,18 +78,6 @@ batch = 0
 feed = "github-release"
 repo = "zen-browser/desktop"
 
-# emacs-pgtk: GNU Emacs 31 pgtk source build from the ftp.gnu.org tarball
-# (aot native compilation + tree-sitter; heavy ~2h build). The generic
-# github-tag feed can't strip the "emacs-" tag prefix, so a custom feed
-# ranks the emacs-mirror/emacs tags and HEAD-probes the ftp.gnu.org tarball
-# (pretest tags' tarballs live on alpha.gnu.org and would 404 here).
-[emacs-pgtk]
-batch = 0
-
-[emacs-pgtk.updates]
-feed = "custom"
-custom = "emacs-pgtk"
-
 # zotero: rewrap of upstream's user-facing Linux tarball; the sweep
 # HEAD-probes the tarball URL (10.0.4+ tarballs 403 the probe — documented
 # in custom_zotero).

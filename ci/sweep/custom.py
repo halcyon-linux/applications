@@ -224,36 +224,6 @@ def custom_zotero(spec: SpecFile, pkg_dir: Path) -> None:
     raise feeds.FeedError("zotero: no tag carries a published linux tarball")
 
 
-def custom_emacs_pgtk(spec: SpecFile, pkg_dir: Path) -> None:
-    # GNU Emacs publishes on ftp.gnu.org only; the emacs-mirror/emacs GitHub
-    # mirror tags releases as emacs-<version> and pretests as
-    # emacs-<version>.<90+> (pretest tarballs land on alpha.gnu.org, not
-    # ftp.gnu.org). Rank the numeric tags newest-first and HEAD-probe the
-    # ftp.gnu.org tarball zotero-style so a pretest tag never bumps the spec.
-    from functools import cmp_to_key
-
-    from vercmp import rpmvercmp
-
-    versions = sorted(
-        {
-            v
-            for v in (
-                t.removeprefix("emacs-")
-                for t in feeds.github_tag_names("emacs-mirror/emacs")
-            )
-            if re.fullmatch(r"[0-9][0-9.]*", v)
-        },
-        key=cmp_to_key(rpmvercmp),
-        reverse=True,
-    )
-    for version in versions:
-        url = f"https://ftp.gnu.org/gnu/emacs/emacs-{version}.tar.xz"
-        if feeds.head_probe(url):
-            spec.set_version(version)
-            return
-    raise feeds.FeedError("emacs-pgtk: no tag carries a published tarball")
-
-
 def custom_private_internet_access(spec: SpecFile, pkg_dir: Path) -> None:
     # PIA publishes no version feed at all: no GitHub release assets and a 403
     # on the installers directory listing — the AUR piavpn-bin maintainer does
