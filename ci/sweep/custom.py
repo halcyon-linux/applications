@@ -472,39 +472,6 @@ def custom_chatgpt(spec: SpecFile, pkg_dir: Path) -> None:
     spec.set_global("digest", digest)
 
 
-def custom_claude_science(spec: SpecFile, pkg_dir: Path) -> None:
-    # Anthropic serves the latest build from a stable URL and publishes no
-    # sha256. The version comes from the Content-Disposition filename and the
-    # digest from x-goog-hash's MD5; then the versioned URL the spec pins is
-    # probed, so a latest-only build never writes an unfetchable Source0.
-    import base64
-
-    latest = "https://downloads.claude.ai/claude-science/latest/linux-x64"
-    headers = feeds.head_headers(latest)
-    disposition = headers.get("Content-Disposition", "")
-    m = re.search(r'filename="claude-science-([0-9][0-9.]*)-linux-x64"', disposition)
-    if not m:
-        raise feeds.FeedError(
-            f"claude-science: no version in Content-Disposition {disposition!r}")
-    version = m.group(1)
-
-    md5 = ""
-    for value in headers.get_all("x-goog-hash") or []:
-        for part in value.split(","):
-            part = part.strip()
-            if part.startswith("md5="):
-                md5 = base64.b64decode(part[len("md5="):]).hex()
-    if not re.fullmatch(r"[0-9a-f]{32}", md5):
-        raise feeds.FeedError("claude-science: download endpoint has no MD5 header")
-
-    versioned = f"https://downloads.claude.ai/claude-science/{version}/linux-x64"
-    if not feeds.head_probe(versioned):
-        raise feeds.FeedError(
-            f"claude-science: versioned URL not published: {versioned}")
-    spec.set_version(version)
-    spec.set_global("md5", md5)
-
-
 def custom_jupyterlab_desktop(spec: SpecFile, pkg_dir: Path) -> None:
     # JupyterLab Desktop tags are vX.Y.Z-N (e.g. v4.6.3-1). The sweep
     # extracts X.Y.Z as Version and pins the full tag in %global upstream_tag

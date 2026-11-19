@@ -139,15 +139,6 @@ batch = 0
 feed = "custom"
 custom = "claude-desktop"
 
-# claude-science: Anthropic's single-file linux-x64 release; the download
-# endpoint publishes no sha256, so the feed pins the header's MD5.
-[claude-science]
-batch = 0
-
-[claude-science.updates]
-feed = "custom"
-custom = "claude-science"
-
 # chatgpt: vendor rewrap of OpenAI's official RPM (same name as upstream);
 # the upstream yum repodata supplies the version, the upstream release
 # number and the sha256.
