@@ -9,7 +9,7 @@
 %global _build_id_links none
 
 Name:           openchamber
-Version:        2.7.2
+Version:        2.7.3
 Release:        1%{?dist}
 Summary:        Agentic Development Environment based on OpenCode AI agent
 License:        MIT
