@@ -119,37 +119,6 @@ def custom_obsidian(spec: SpecFile, pkg_dir: Path) -> None:
     )
 
 
-def custom_openchamber_cli(spec: SpecFile, pkg_dir: Path) -> None:
-    # openchamber-cli: the openchamber-web tarball (Source0) is tracked from
-    # the openchamber/openchamber GitHub release; the release's sha256 asset
-    # digest is pinned in %global digest for the %prep checksum. Node.js
-    # (Source1) is pinned manually — its version is not swept.
-    releases = feeds.fetch_json(
-        "https://api.github.com/repos/openchamber/openchamber/releases?per_page=30"
-    )
-    for release in releases:
-        version = None
-        digest = "none"
-        for asset in release.get("assets", []):
-            name = asset.get("name", "")
-            m = re.fullmatch(r"openchamber-web-([0-9.]+)\.tgz", name)
-            if not m:
-                continue
-            version = m.group(1)
-            found = asset.get("digest") or ""
-            if found.startswith("sha256:"):
-                digest = found[len("sha256:"):]
-            break
-        if version is None:
-            continue
-        spec.set_version(version)
-        spec.set_global("digest", digest)
-        return
-    raise feeds.FeedError(
-        "openchamber-cli: no release in the last 30 ships an openchamber-web-<ver>.tgz"
-    )
-
-
 def custom_pi_gui(spec: SpecFile, pkg_dir: Path) -> None:
     # Track the newest stable release that carries the official amd64 Debian
     # package. Its GitHub asset digest is required so every RPM build verifies
