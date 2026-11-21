@@ -182,6 +182,7 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/com.anthropic.Claude.
 /usr/lib/claude-desktop/
 %{_datadir}/applications/com.anthropic.Claude.desktop
 %{_datadir}/icons/hicolor/*/apps/claude-desktop.png
+%{_datadir}/pixmaps/claude-desktop.png
 %{_datadir}/gnome-shell/search-providers/com.anthropic.Claude.search-provider.ini
 %{_datadir}/dbus-1/services/com.anthropic.Claude.SearchProvider.service
 %{_datadir}/mime/packages/com.anthropic.Claude.xml
