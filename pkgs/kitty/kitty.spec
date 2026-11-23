@@ -10,7 +10,7 @@
 %define debug_package %{nil}
 
 Name:           kitty
-Version:        0.51.0
+Version:        0.51.1
 Release:        1%{?dist}
 Summary:        Cross-platform, fast, feature full, GPU based terminal emulator
 
