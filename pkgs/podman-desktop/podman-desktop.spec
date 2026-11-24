@@ -1,7 +1,7 @@
 # Vendor rewrap of Podman Desktop's upstream Linux x64 release archive.
 # The updater feed pins the release asset digest; disable the in-app updater
 # so package updates remain owned by dnf.
-%global             digest 53e2e4659a891b728287c362f1e060b18e1114397d5a3824b35371a7c992e70c
+%global             digest 9805871c4a5e4124b1bc0a7a7e411c2814214751a9dc7054d908add9ed405aa8
 %global             debug_package %{nil}
 %global _build_id_links none
 %global             __os_install_post %{nil}
@@ -10,7 +10,7 @@
 %global __requires_exclude ^libffmpeg[.]so|^libvulkan[.]so[.]1|^libEGL[.]so|^libGLESv2[.]so|^libvk_swiftshader[.]so
 
 Name:           podman-desktop
-Version:        1.30.7
+Version:        1.31.0
 Release:        1%{?dist}
 Summary:        Graphical interface for containers and Kubernetes
 License:        Apache-2.0
