@@ -546,7 +546,7 @@ def custom_appflowy(spec: SpecFile, pkg_dir: Path) -> None:
 
 
 def _github_release_archive(spec: SpecFile, repo: str, asset_pattern: str,
-                            package: str) -> None:
+                            package: str, *, require_digest: bool = False) -> None:
     """Pin newest stable release carrying the required Linux x64 archive."""
     releases = feeds.fetch_json(
         f"https://api.github.com/repos/{repo}/releases?per_page=30")
@@ -564,6 +564,8 @@ def _github_release_archive(spec: SpecFile, repo: str, asset_pattern: str,
             digest = asset.get("digest") or "none"
             if digest.startswith("sha256:"):
                 digest = digest.removeprefix("sha256:")
+            if require_digest and digest == "none":
+                raise feeds.FeedError(f"{package}: missing SHA256 for {asset['name']}")
             if digest != "none" and not re.fullmatch(r"[0-9a-f]{64}", digest):
                 raise feeds.FeedError(
                     f"{package}: invalid SHA256 {digest!r} for {asset['name']}")
@@ -573,6 +575,18 @@ def _github_release_archive(spec: SpecFile, repo: str, asset_pattern: str,
             return
     raise feeds.FeedError(
         f"{package}: no stable release in the last 30 ships its x86_64 archive")
+
+
+def custom_paseo(spec: SpecFile, pkg_dir: Path) -> None:
+    _github_release_archive(
+        spec, "getpaseo/paseo", r"Paseo-{version}-x86_64\.rpm",
+        "paseo", require_digest=True)
+
+
+def custom_t3_code(spec: SpecFile, pkg_dir: Path) -> None:
+    _github_release_archive(
+        spec, "pingdotgg/t3code", r"T3-Code-x86_64\.AppImage",
+        "t3-code", require_digest=True)
 
 
 def custom_openwork(spec: SpecFile, pkg_dir: Path) -> None:

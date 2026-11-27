@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Paseo
+Comment=Run coding agents locally and remotely
+Exec=paseo-desktop %U
+Icon=paseo
+Type=Application
+Terminal=false
+StartupWMClass=Paseo
+Categories=Development;IDE;
+MimeType=x-scheme-handler/paseo;

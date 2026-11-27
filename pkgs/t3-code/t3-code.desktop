@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=T3 Code
+Comment=Control plane for coding agents
+Exec=t3code %U
+Icon=t3code
+Type=Application
+Terminal=false
+StartupWMClass=com.t3tools.T3Code
+Categories=Development;IDE;
+MimeType=x-scheme-handler/t3code;x-scheme-handler/t3code-dev;

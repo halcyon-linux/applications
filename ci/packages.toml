@@ -25,6 +25,20 @@
 # --------------------------------------------------------------- desktops
 
 # --- batch 0 ------------------------------------------------------------
+[paseo]
+batch = 0
+
+[paseo.updates]
+feed = "custom"
+custom = "paseo"
+
+[t3-code]
+batch = 0
+
+[t3-code.updates]
+feed = "custom"
+custom = "t3_code"
+
 # openwork and podman-desktop rewrap their official Linux x64 Electron
 # tarballs. Custom feeds select stable releases with matching assets and pin
 # GitHub's published SHA256 digest.

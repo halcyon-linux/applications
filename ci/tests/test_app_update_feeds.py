@@ -11,7 +11,9 @@ from custom import (
     custom_antigravity_desktop,
     custom_antigravity_ide,
     custom_openwork,
+    custom_paseo,
     custom_podman_desktop,
+    custom_t3_code,
     custom_windscribe,
     custom_zcode,
 )
@@ -131,6 +133,102 @@ class AppUpdateFeedsTest(unittest.TestCase):
                          spec, Path(self.tmp.name))
         self.assertIn("Release:        2%{?dist}", spec.text)
         self.assertEqual(spec.get_global("build_id"), "4671306730438656")
+
+    def test_paseo_selects_stable_x86_64_rpm(self):
+        release = {"tag_name": "v0.18.1", "assets": [
+            {"name": "Paseo-0.18.1-arm64.rpm", "digest": "sha256:" + "a" * 64},
+            {"name": "Paseo-0.18.1-x86_64.rpm", "digest": "sha256:" + "b" * 64},
+        ]}
+        spec = self.spec()
+        with patch("custom.feeds.fetch_json", return_value=[
+            dict(release, prerelease=True), dict(release, draft=True), release,
+        ]):
+            custom_paseo(spec, Path(self.tmp.name))
+        self.assertEqual(spec.get_version(), "0.18.1")
+        self.assertEqual(spec.get_global("digest"), "b" * 64)
+
+    def test_paseo_rejects_missing_rpm_and_invalid_digest_without_mutation(self):
+        for assets in ([], *[
+            [{"name": "Paseo-0.18.1-x86_64.rpm", "digest": digest}]
+            for digest in (None, "sha256:bad", "sha512:" + "a" * 128)
+        ]):
+            with self.subTest(assets=assets):
+                spec = self.spec()
+                original = spec.text
+                with patch("custom.feeds.fetch_json", return_value=[{
+                    "tag_name": "v0.18.1", "assets": assets,
+                }]):
+                    with self.assertRaises(FeedError):
+                        custom_paseo(spec, Path(self.tmp.name))
+                self.assertEqual(spec.text, original)
+
+    def test_paseo_checksum_only_update_and_repeated_sweep(self):
+        from sweep import prepare_spec
+
+        spec = self.spec()
+        spec.set_version("0.18.1")
+        spec.set_global("digest", "a" * 64)
+        self.path.write_text(spec.text)
+        release = {"tag_name": "v0.18.1", "assets": [{
+            "name": "Paseo-0.18.1-x86_64.rpm", "digest": "sha256:" + "b" * 64,
+        }]}
+        for _ in range(2):
+            spec = self.spec()
+            with patch("custom.feeds.fetch_json", return_value=[release]):
+                prepare_spec("paseo", {"feed": "custom", "custom": "paseo"},
+                             spec, Path(self.tmp.name))
+            self.assertIn("Release:        2%{?dist}", spec.text)
+            self.assertEqual(spec.get_global("digest"), "b" * 64)
+            self.path.write_text(spec.text)
+
+    def test_t3_code_selects_stable_desktop_asset(self):
+        release = {"tag_name": "v0.1.13", "assets": [
+            {"name": "T3-Code-x86_64.AppImage", "digest": "sha256:" + "a" * 64},
+            {"name": "t3-0.1.13-linux-x64.tar.gz", "digest": "sha256:" + "b" * 64},
+        ]}
+        spec = self.spec()
+        with patch("custom.feeds.fetch_json", return_value=[
+            dict(release, tag_name="v0.2.0", prerelease=True),
+            dict(release, tag_name="v0.3.0", draft=True),
+            release,
+        ]):
+            custom_t3_code(spec, Path(self.tmp.name))
+        self.assertEqual(spec.get_version(), "0.1.13")
+        self.assertEqual(spec.get_global("digest"), "a" * 64)
+
+    def test_t3_code_rejects_missing_asset_or_invalid_digest_without_mutation(self):
+        for assets in ([], [{"name": "T3-Code-arm64.AppImage"}], *[
+            [{"name": "T3-Code-x86_64.AppImage", "digest": digest}]
+            for digest in (None, "sha256:bad", "sha512:" + "a" * 128)
+        ]):
+            with self.subTest(assets=assets):
+                spec = self.spec()
+                original = spec.text
+                with patch("custom.feeds.fetch_json", return_value=[
+                    {"tag_name": "v0.1.13", "assets": assets},
+                ]):
+                    with self.assertRaises(FeedError):
+                        custom_t3_code(spec, Path(self.tmp.name))
+                self.assertEqual(spec.text, original)
+
+    def test_t3_code_checksum_changes_bump_release_and_noop_is_idempotent(self):
+        from sweep import prepare_spec
+
+        spec = self.spec()
+        spec.set_version("0.1.13")
+        spec.set_global("digest", "a" * 64)
+        self.path.write_text(spec.text)
+        for digest, expected_release in (("a" * 64, 1), ("b" * 64, 2)):
+            spec = self.spec()
+            with patch("custom.feeds.fetch_json", return_value=[{
+                "tag_name": "v0.1.13", "assets": [{
+                    "name": "T3-Code-x86_64.AppImage", "digest": "sha256:" + digest,
+                }],
+            }]):
+                prepare_spec("t3-code", {"feed": "custom", "custom": "t3_code"},
+                             spec, Path(self.tmp.name))
+            self.assertIn(f"Release:        {expected_release}%{{?dist}}", spec.text)
+            self.assertEqual(spec.get_global("digest"), digest)
 
     def test_openwork_tracks_stable_x64_archive_and_digest(self):
         release = {
