@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Antigravity
+Comment=Google Antigravity agent workspace
+GenericName=Agentic Platform
+Exec=antigravity %U
+Icon=antigravity
+Type=Application
+StartupNotify=false
+StartupWMClass=Antigravity
+Categories=Development;IDE;

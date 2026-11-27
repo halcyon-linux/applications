@@ -177,6 +177,15 @@ batch = 0
 feed = "custom"
 custom = "antigravity_cli"
 
+# antigravity: Google's desktop agent workspace; the official docs link
+# carries the version and build ID for the proprietary x64 archive.
+[antigravity]
+batch = 0
+
+[antigravity.updates]
+feed = "custom"
+custom = "antigravity_desktop"
+
 # distroshelf: GNOME GUI for distrobox containers (ranfdev/DistroShelf);
 # ships the distroshelf-helper launcher stub alongside the app.
 [distroshelf]

@@ -5,7 +5,9 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from feeds import FeedError
 from custom import (
+    custom_antigravity_desktop,
     custom_openwork,
     custom_podman_desktop,
     custom_windscribe,
@@ -16,6 +18,7 @@ from spec import SpecFile
 
 SPEC_TEXT = """\
 %global digest none
+%global build_id none
 Name:           example
 Version:        0.0.0
 Release:        1%{?dist}
@@ -37,6 +40,35 @@ class AppUpdateFeedsTest(unittest.TestCase):
 
     def spec(self) -> SpecFile:
         return SpecFile(self.path)
+
+    def test_antigravity_desktop_tracks_only_the_official_x64_archive(self):
+        page = """
+        x64: https://storage.googleapis.com/antigravity-public/antigravity-hub/2.35.2-4585983447007232/linux-x64/Antigravity.tar.gz
+        arm: https://storage.googleapis.com/antigravity-public/antigravity-hub/2.35.2-4585983447007232/linux-arm/Antigravity.tar.gz
+        CLI: https://storage.googleapis.com/antigravity-public/antigravity-cli/1.5.13-5999302598852608/linux-x64/cli_linux_x64.tar.gz
+        """
+        spec = self.spec()
+        with patch("custom.feeds.fetch_text", return_value=page):
+            custom_antigravity_desktop(spec, Path(self.tmp.name))
+        self.assertEqual(spec.get_version(), "2.35.2")
+        self.assertEqual(spec.get_global("build_id"), "4585983447007232")
+
+    def test_antigravity_desktop_rejects_missing_or_ambiguous_x64_archive(self):
+        spec = self.spec()
+        original = spec.text
+        with patch("custom.feeds.fetch_text", return_value="no x64 release"):
+            with self.assertRaisesRegex(FeedError, "expected one official x64 archive"):
+                custom_antigravity_desktop(spec, Path(self.tmp.name))
+        self.assertEqual(spec.text, original)
+
+        archive = (
+            "https://storage.googleapis.com/antigravity-public/antigravity-hub/"
+            "2.35.2-4585983447007232/linux-x64/Antigravity.tar.gz"
+        )
+        with patch("custom.feeds.fetch_text", return_value=f"{archive}\n{archive}"):
+            with self.assertRaisesRegex(FeedError, "expected one official x64 archive"):
+                custom_antigravity_desktop(spec, Path(self.tmp.name))
+        self.assertEqual(spec.text, original)
 
     def test_openwork_tracks_stable_x64_archive_and_digest(self):
         release = {

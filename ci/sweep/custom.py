@@ -43,6 +43,24 @@ def custom_antigravity_cli(spec: SpecFile, pkg_dir: Path) -> None:
     spec.set_global("cli_build", m.group(2))
 
 
+def custom_antigravity_desktop(spec: SpecFile, pkg_dir: Path) -> None:
+    # Google publishes both architectures on its getting-started page. Match
+    # only the x64 archive and keep its version/build pair from one URL.
+    page = feeds.fetch_text("https://antigravity.google/docs/getting-started.md")
+    matches = re.findall(
+        r"https://storage\.googleapis\.com/antigravity-public/antigravity-hub/"
+        r"([0-9]+(?:\.[0-9]+)+)-([0-9]+)/linux-x64/Antigravity\.tar\.gz",
+        page,
+    )
+    if len(matches) != 1:
+        raise feeds.FeedError(
+            f"antigravity: expected one official x64 archive link, found {len(matches)}"
+        )
+    version, build_id = matches[0]
+    spec.set_version(version)
+    spec.set_global("build_id", build_id)
+
+
 def custom_bees(spec: SpecFile, pkg_dir: Path) -> None:
     # Zygo/bees publishes no GitHub releases and tags prereleases as
     # vX.Y.Z-rcN; rpmvercmp ranks a suffixed tag above its release

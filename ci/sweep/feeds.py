@@ -25,6 +25,7 @@ GITHUB_API = "https://api.github.com"
 ALLOWED_HOSTS = frozenset({
     "api.github.com",
     "aur.archlinux.org",
+    "antigravity.google",
     "cdn-zcode.z.ai",
     "download.zotero.org",
     "downloads.claude.ai",
