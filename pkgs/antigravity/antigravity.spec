@@ -18,11 +18,12 @@ URL:            https://antigravity.google/product/antigravity-2
 #!RemoteAsset
 Source0:        https://storage.googleapis.com/antigravity-public/antigravity-hub/%{version}-%{build_id}/linux-x64/Antigravity.tar.gz
 Source1:        antigravity.desktop
-Source2:        https://aur.archlinux.org/cgit/aur.git/plain/antigravity.png?h=antigravity&id=9c47441634aa1b7069cf1e9f22bde02a3d89f1a2
+Source2:        extract-icon.py
 
 ExclusiveArch:  x86_64
 
 BuildRequires:  desktop-file-utils
+BuildRequires:  python3
 
 # Fedora equivalents of the upstream Antigravity package's runtime dependencies.
 Requires:       alsa-lib
@@ -65,7 +66,9 @@ ln -s %{_libdir}/antigravity/antigravity \
     %{buildroot}%{_bindir}/antigravity
 install -Dm644 %{SOURCE1} \
     %{buildroot}%{_datadir}/applications/antigravity.desktop
-install -Dm644 %{SOURCE2} \
+install -dm755 %{buildroot}%{_datadir}/icons/hicolor/512x512/apps
+python3 %{SOURCE2} \
+    %{buildroot}%{_libdir}/antigravity/resources/app.asar \
     %{buildroot}%{_datadir}/icons/hicolor/512x512/apps/antigravity.png
 install -Dm644 %{buildroot}%{_libdir}/antigravity/LICENSE.electron.txt \
     %{buildroot}%{_licensedir}/antigravity/LICENSE.electron.txt

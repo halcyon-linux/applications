@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 from feeds import FeedError
 from custom import (
+    custom_antigravity_cli,
     custom_antigravity_desktop,
     custom_openwork,
     custom_podman_desktop,
@@ -19,6 +20,7 @@ from spec import SpecFile
 SPEC_TEXT = """\
 %global digest none
 %global build_id none
+%global cli_build none
 Name:           example
 Version:        0.0.0
 Release:        1%{?dist}
@@ -68,6 +70,25 @@ class AppUpdateFeedsTest(unittest.TestCase):
         with patch("custom.feeds.fetch_text", return_value=f"{archive}\n{archive}"):
             with self.assertRaisesRegex(FeedError, "expected one official x64 archive"):
                 custom_antigravity_desktop(spec, Path(self.tmp.name))
+        self.assertEqual(spec.text, original)
+
+    def test_antigravity_cli_tracks_aur_version_and_build_id(self):
+        spec = self.spec()
+        with patch("custom.feeds.fetch_json", return_value={
+            "results": [{"Version": "1.5.17_4823843970351104-1"}],
+        }):
+            custom_antigravity_cli(spec, Path(self.tmp.name))
+        self.assertEqual(spec.get_version(), "1.5.17")
+        self.assertEqual(spec.get_global("cli_build"), "4823843970351104")
+
+    def test_antigravity_cli_rejects_unexpected_aur_version_without_mutation(self):
+        spec = self.spec()
+        original = spec.text
+        with patch("custom.feeds.fetch_json", return_value={
+            "results": [{"Version": "1.5.17"}],
+        }):
+            with self.assertRaisesRegex(FeedError, "unexpected AUR pkgver"):
+                custom_antigravity_cli(spec, Path(self.tmp.name))
         self.assertEqual(spec.text, original)
 
     def test_openwork_tracks_stable_x64_archive_and_digest(self):
