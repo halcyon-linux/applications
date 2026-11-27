@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Antigravity IDE URL Handler
+Exec=antigravity-ide --open-url %U
+Icon=antigravity-ide
+Type=Application
+NoDisplay=true
+MimeType=x-scheme-handler/antigravity-ide;

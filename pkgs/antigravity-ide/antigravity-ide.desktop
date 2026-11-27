@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Antigravity IDE
+Comment=Google's agentic code editor
+GenericName=Text Editor
+Exec=antigravity-ide %F
+Icon=antigravity-ide
+Type=Application
+StartupNotify=false
+StartupWMClass=antigravity-ide
+Categories=Development;IDE;
+MimeType=application/x-antigravity-ide-workspace;

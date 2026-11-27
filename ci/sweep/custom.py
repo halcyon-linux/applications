@@ -61,6 +61,28 @@ def custom_antigravity_desktop(spec: SpecFile, pkg_dir: Path) -> None:
     spec.set_global("build_id", build_id)
 
 
+def custom_antigravity_ide(spec: SpecFile, pkg_dir: Path) -> None:
+    from vercmp import rpmvercmp
+
+    page = feeds.fetch_text("https://antigravity.google/download/linux")
+    # Google repeats identical download links for different page layouts.
+    matches = set(re.findall(
+        r"https://(?:edgedl\.me\.gvt1\.com/edgedl|dl\.google\.com)"
+        r"/release2/j0qc3/antigravity/stable/"
+        r"([0-9]+(?:\.[0-9]+)+)-([0-9]+)/linux-x64/Antigravity%20IDE\.tar\.gz",
+        page,
+    ))
+    if len(matches) != 1:
+        raise feeds.FeedError(
+            f"antigravity-ide: expected one distinct official x64 archive, found {len(matches)}"
+        )
+    version, build_id = matches.pop()
+    if rpmvercmp(version, spec.get_version()) < 0:
+        raise feeds.FeedError("antigravity-ide: download page advertises an older version")
+    spec.set_version(version)
+    spec.set_global("build_id", build_id)
+
+
 def custom_bees(spec: SpecFile, pkg_dir: Path) -> None:
     # Zygo/bees publishes no GitHub releases and tags prereleases as
     # vX.Y.Z-rcN; rpmvercmp ranks a suffixed tag above its release

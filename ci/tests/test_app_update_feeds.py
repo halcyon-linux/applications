@@ -9,6 +9,7 @@ from feeds import FeedError
 from custom import (
     custom_antigravity_cli,
     custom_antigravity_desktop,
+    custom_antigravity_ide,
     custom_openwork,
     custom_podman_desktop,
     custom_windscribe,
@@ -90,6 +91,46 @@ class AppUpdateFeedsTest(unittest.TestCase):
             with self.assertRaisesRegex(FeedError, "unexpected AUR pkgver"):
                 custom_antigravity_cli(spec, Path(self.tmp.name))
         self.assertEqual(spec.text, original)
+
+    def test_antigravity_ide_deduplicates_links_and_selects_x64(self):
+        url = ("https://edgedl.me.gvt1.com/edgedl/release2/j0qc3/antigravity/stable/"
+               "2.9.0-4671306730438656/linux-x64/Antigravity%20IDE.tar.gz")
+        spec = self.spec()
+        page = "\n".join([url, url, url.replace("linux-x64", "linux-arm"),
+                          url.replace("Antigravity%20IDE", "Antigravity")])
+        with patch("custom.feeds.fetch_text", return_value=page):
+            custom_antigravity_ide(spec, Path(self.tmp.name))
+        self.assertEqual(spec.get_version(), "2.9.0")
+        self.assertEqual(spec.get_global("build_id"), "4671306730438656")
+
+    def test_antigravity_ide_rejects_missing_conflicting_and_stale_links(self):
+        url = ("https://dl.google.com/release2/j0qc3/antigravity/stable/"
+               "2.9.0-4671306730438656/linux-x64/Antigravity%20IDE.tar.gz")
+        for page in ("missing", url + "\n" + url.replace("2.9.0-", "2.10.0-"),
+                     url.replace("2.9.0-", "2.8.0-")):
+            with self.subTest(page=page):
+                spec = self.spec()
+                spec.set_version("2.9.0")
+                original = spec.text
+                with patch("custom.feeds.fetch_text", return_value=page):
+                    with self.assertRaises(FeedError):
+                        custom_antigravity_ide(spec, Path(self.tmp.name))
+                self.assertEqual(spec.text, original)
+
+    def test_antigravity_ide_build_id_change_bumps_release(self):
+        from sweep import prepare_spec
+
+        spec = self.spec()
+        spec.set_version("2.9.0")
+        self.path.write_text(spec.text)
+        spec = self.spec()
+        url = ("https://dl.google.com/release2/j0qc3/antigravity/stable/"
+               "2.9.0-4671306730438656/linux-x64/Antigravity%20IDE.tar.gz")
+        with patch("custom.feeds.fetch_text", return_value=url):
+            prepare_spec("antigravity-ide", {"feed": "custom", "custom": "antigravity_ide"},
+                         spec, Path(self.tmp.name))
+        self.assertIn("Release:        2%{?dist}", spec.text)
+        self.assertEqual(spec.get_global("build_id"), "4671306730438656")
 
     def test_openwork_tracks_stable_x64_archive_and_digest(self):
         release = {
