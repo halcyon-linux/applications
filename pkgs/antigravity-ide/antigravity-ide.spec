@@ -3,12 +3,15 @@
 %global __os_install_post %{nil}
 %global __provides_exclude_from ^%{_libdir}/antigravity-ide/
 # Electron loads its private FFmpeg library from the application directory.
-%global __requires_exclude ^libffmpeg[.]so
+%global __requires_exclude ^libffmpeg[.]so|^libcurl[.]so[.]4[(]CURL_OPENSSL_4[)][(]64bit[)]$
+# The vendor's Debian curl symbol namespace is absent from Fedora's libcurl.
+# Keep the unversioned libcurl requirement and the system library dependency.
 %global build_id 4671306730438656
+%global digest f0193df2558e35ff98fafe829a5c318a1ae0957942343597eb9f97098e276b23
 
 Name:           antigravity-ide
 Version:        2.9.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Google's agentic integrated development environment
 License:        LicenseRef-Proprietary
 URL:            https://antigravity.google/product/antigravity-ide
@@ -23,6 +26,7 @@ Requires:       bash
 Requires:       hicolor-icon-theme
 Requires:       libsecret
 Requires:       curl
+Requires:       libcurl
 Requires:       openssl-libs
 Requires:       libsoup3
 Requires:       webkit2gtk4.1
@@ -34,6 +38,7 @@ x64 release archive.
 
 %prep
 %setup -q -c -T
+echo '%{digest}  %{SOURCE0}' | sha256sum -c -
 tar -xzf %{SOURCE0}
 test -x 'Antigravity IDE/bin/antigravity-ide'
 test -f 'Antigravity IDE/libffmpeg.so'
@@ -74,5 +79,9 @@ update-mime-database "$PWD/mime-check"
 %license %{_licensedir}/%{name}/LICENSES.chromium.html
 
 %changelog
+* Sat Nov 28 2026 halcyon-linux <aahsnr041@proton.me> - 2.9.0-2
+- Use Google's update manifest and verify the archive SHA256
+- Filter the Debian curl symbol namespace while retaining Fedora libcurl
+
 * Sat Nov 28 2026 halcyon-linux <aahsnr041@proton.me> - 2.9.0-1
 - Package Google's standalone IDE archive with automatic release tracking

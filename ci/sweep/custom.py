@@ -64,23 +64,29 @@ def custom_antigravity_desktop(spec: SpecFile, pkg_dir: Path) -> None:
 def custom_antigravity_ide(spec: SpecFile, pkg_dir: Path) -> None:
     from vercmp import rpmvercmp
 
-    page = feeds.fetch_text("https://antigravity.google/download/linux")
-    # Google repeats identical download links for different page layouts.
-    matches = set(re.findall(
+    manifest = feeds.fetch_json(
+        "https://antigravity-ide-auto-updater-974169037036.us-central1.run.app"
+        "/api/update/linux-x64/stable/latest")
+    if not isinstance(manifest, dict):
+        raise feeds.FeedError("antigravity-ide: update manifest must be an object")
+    # The manifest's productVersion is the editor base version, not the IDE release.
+    match = re.fullmatch(
         r"https://(?:edgedl\.me\.gvt1\.com/edgedl|dl\.google\.com)"
         r"/release2/j0qc3/antigravity/stable/"
-        r"([0-9]+(?:\.[0-9]+)+)-([0-9]+)/linux-x64/Antigravity%20IDE\.tar\.gz",
-        page,
-    ))
-    if len(matches) != 1:
-        raise feeds.FeedError(
-            f"antigravity-ide: expected one distinct official x64 archive, found {len(matches)}"
-        )
-    version, build_id = matches.pop()
+        r"([0-9]+(?:\.[0-9]+)+)-([0-9]+)/linux-x64/Antigravity(?:%20| )IDE\.tar\.gz",
+        manifest.get("url", ""),
+    )
+    if match is None:
+        raise feeds.FeedError("antigravity-ide: invalid official x64 archive URL")
+    digest = manifest.get("sha256hash", "")
+    if not re.fullmatch(r"[0-9a-f]{64}", digest):
+        raise feeds.FeedError("antigravity-ide: invalid archive SHA256")
+    version, build_id = match.groups()
     if rpmvercmp(version, spec.get_version()) < 0:
-        raise feeds.FeedError("antigravity-ide: download page advertises an older version")
+        raise feeds.FeedError("antigravity-ide: update manifest advertises an older version")
     spec.set_version(version)
     spec.set_global("build_id", build_id)
+    spec.set_global("digest", digest)
 
 
 def custom_bees(spec: SpecFile, pkg_dir: Path) -> None:

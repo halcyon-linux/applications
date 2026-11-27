@@ -200,7 +200,7 @@ batch = 0
 feed = "custom"
 custom = "antigravity_desktop"
 
-# Standalone IDE releases carry their own version and Google build ID.
+# The standalone IDE's Google update manifest supplies its archive and SHA256.
 [antigravity-ide]
 batch = 0
 

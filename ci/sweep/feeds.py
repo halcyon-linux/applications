@@ -26,6 +26,7 @@ ALLOWED_HOSTS = frozenset({
     "api.github.com",
     "aur.archlinux.org",
     "antigravity.google",
+    "antigravity-ide-auto-updater-974169037036.us-central1.run.app",
     "cdn-zcode.z.ai",
     "download.zotero.org",
     "downloads.claude.ai",

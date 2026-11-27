@@ -94,27 +94,33 @@ class AppUpdateFeedsTest(unittest.TestCase):
                 custom_antigravity_cli(spec, Path(self.tmp.name))
         self.assertEqual(spec.text, original)
 
-    def test_antigravity_ide_deduplicates_links_and_selects_x64(self):
+    def test_antigravity_ide_reads_official_manifest_archive_version(self):
         url = ("https://edgedl.me.gvt1.com/edgedl/release2/j0qc3/antigravity/stable/"
                "2.9.0-4671306730438656/linux-x64/Antigravity%20IDE.tar.gz")
-        spec = self.spec()
-        page = "\n".join([url, url, url.replace("linux-x64", "linux-arm"),
-                          url.replace("Antigravity%20IDE", "Antigravity")])
-        with patch("custom.feeds.fetch_text", return_value=page):
-            custom_antigravity_ide(spec, Path(self.tmp.name))
-        self.assertEqual(spec.get_version(), "2.9.0")
-        self.assertEqual(spec.get_global("build_id"), "4671306730438656")
+        for archive in (url, url.replace("%20", " ")):
+            spec = self.spec()
+            with patch("custom.feeds.fetch_json", return_value={
+                "url": archive, "sha256hash": "a" * 64, "productVersion": "1.107.0",
+            }):
+                custom_antigravity_ide(spec, Path(self.tmp.name))
+            self.assertEqual(spec.get_version(), "2.9.0")
+            self.assertEqual(spec.get_global("build_id"), "4671306730438656")
+            self.assertEqual(spec.get_global("digest"), "a" * 64)
 
-    def test_antigravity_ide_rejects_missing_conflicting_and_stale_links(self):
+    def test_antigravity_ide_rejects_invalid_and_stale_manifest_without_mutation(self):
         url = ("https://dl.google.com/release2/j0qc3/antigravity/stable/"
                "2.9.0-4671306730438656/linux-x64/Antigravity%20IDE.tar.gz")
-        for page in ("missing", url + "\n" + url.replace("2.9.0-", "2.10.0-"),
-                     url.replace("2.9.0-", "2.8.0-")):
-            with self.subTest(page=page):
+        valid = {"url": url, "sha256hash": "a" * 64}
+        for manifest in (None, [], "invalid", {},
+                         dict(valid, url=url.replace("linux-x64", "linux-arm")),
+                         dict(valid, url=url.replace("2.9.0-", "2.8.0-")),
+                         dict(valid, url=url.replace("dl.google.com", "example.com")),
+                         dict(valid, sha256hash="bad")):
+            with self.subTest(manifest=manifest):
                 spec = self.spec()
                 spec.set_version("2.9.0")
                 original = spec.text
-                with patch("custom.feeds.fetch_text", return_value=page):
+                with patch("custom.feeds.fetch_json", return_value=manifest):
                     with self.assertRaises(FeedError):
                         custom_antigravity_ide(spec, Path(self.tmp.name))
                 self.assertEqual(spec.text, original)
@@ -128,7 +134,9 @@ class AppUpdateFeedsTest(unittest.TestCase):
         spec = self.spec()
         url = ("https://dl.google.com/release2/j0qc3/antigravity/stable/"
                "2.9.0-4671306730438656/linux-x64/Antigravity%20IDE.tar.gz")
-        with patch("custom.feeds.fetch_text", return_value=url):
+        with patch("custom.feeds.fetch_json", return_value={
+            "url": url, "sha256hash": "a" * 64,
+        }):
             prepare_spec("antigravity-ide", {"feed": "custom", "custom": "antigravity_ide"},
                          spec, Path(self.tmp.name))
         self.assertIn("Release:        2%{?dist}", spec.text)
