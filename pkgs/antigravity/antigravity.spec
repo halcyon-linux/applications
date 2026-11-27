@@ -9,12 +9,12 @@
 %global __requires_exclude ^libffmpeg[.]so
 
 Name:           antigravity
-Version:        2.35.2
+Version:        2.36.0
 Release:        1%{?dist}
 Summary:        Google's agentic desktop workspace
 License:        LicenseRef-Proprietary
 URL:            https://antigravity.google/product/antigravity-2
-%global build_id 4585983447007232
+%global build_id 5596661662220288
 #!RemoteAsset
 Source0:        https://storage.googleapis.com/antigravity-public/antigravity-hub/%{version}-%{build_id}/linux-x64/Antigravity.tar.gz
 Source1:        antigravity.desktop
