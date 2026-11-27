@@ -8,7 +8,7 @@
 
 Name:           t3-code
 Version:        0.1.13
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Desktop control plane for coding agents
 License:        MIT
 URL:            https://t3.codes/
@@ -56,7 +56,10 @@ ln -s %{_libdir}/%{name}/t3code %{buildroot}%{_bindir}/t3code
 install -Dm644 %{SOURCE1} %{buildroot}%{_datadir}/applications/t3code.desktop
 install -Dm644 squashfs-root/.DirIcon %{buildroot}%{_datadir}/pixmaps/t3code.png
 install -Dm644 %{SOURCE2} %{buildroot}%{_licensedir}/%{name}/LICENSE
-install -Dm644 %{SOURCE3} %{buildroot}%{_metainfodir}/com.t3tools.t3code.metainfo.xml
+install -dm755 %{buildroot}%{_metainfodir}
+# The desktop entry supplies the app icon; t3code is not a standard stock icon.
+sed '/<icon type="stock">t3code<\/icon>/d' %{SOURCE3} \
+    > %{buildroot}%{_metainfodir}/com.t3tools.t3code.metainfo.xml
 
 %check
 desktop-file-validate %{buildroot}%{_datadir}/applications/t3code.desktop
@@ -71,5 +74,8 @@ appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/com.t3tools.t3
 %license %{_licensedir}/%{name}/LICENSE
 
 %changelog
+* Sat Nov 28 2026 halcyon-linux <aahsnr041@proton.me> - 0.1.13-2
+- Remove the invalid upstream stock-icon declaration from AppStream metadata
+
 * Sat Nov 28 2026 halcyon-linux <aahsnr041@proton.me> - 0.1.13-1
 - Package the official desktop AppImage with automatic stable release updates
