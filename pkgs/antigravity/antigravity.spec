@@ -5,8 +5,8 @@
 %global _build_id_links none
 %global __os_install_post %{nil}
 %global __provides_exclude_from ^%{_libdir}/antigravity/
-# Avoid the bundled curl/OpenSSL ABI requirement seen in existing Antigravity RPM packaging.
-%global __requires_exclude libcurl.*CURL_OPENSSL
+# Electron's libffmpeg is bundled in app.asar and has no Fedora provider.
+%global __requires_exclude ^libffmpeg[.]so
 
 Name:           antigravity
 Version:        2.35.2
